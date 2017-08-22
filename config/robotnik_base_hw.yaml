@@ -1,5 +1,5 @@
 robotnik_base_hw:
-  port: /dev/pcan_rb1
+  port: /dev/pcan32
 
   # Summit rubber wheels: 0.22, Summit omni wheels: 0.25, RB1: 0.1524 
   diameter_wheel: 0.1520
@@ -26,8 +26,10 @@ robotnik_base_hw:
   joint_elevator_name: rb1_base_elevator_platform_joint
   elevator_high_pos: 0.03
   elevator_low_pos: 0.0
-  elevator_digital_output_high: 6
-  elevator_digital_output_low: 5 
+  elevator_digital_output_high: 3
+  elevator_digital_output_low: 2 
+  elevator_digital_input_high: 3
+  elevator_digital_input_low: 2 
 
 
 #  joint_name:  [front_left_wheel_joint,
