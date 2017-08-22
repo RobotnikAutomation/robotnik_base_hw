@@ -5,6 +5,7 @@
     <arg name="debug" default="false" />
     <arg unless="$(arg debug)" name="launch_prefix" value="" />
     <arg     if="$(arg debug)" name="launch_prefix" value="terminator -m -x gdb --args" /> <!-- local debug -->
+    <!--arg     if="$(arg debug)" name="launch_prefix" value="terminator -m -x valgrind" /--> <!-- local debug -->
 
  
     <rosparam file="$(find robotnik_base_hw)/config/robotnik_base_hw_limits.yaml" command="load" />    
