@@ -1,10 +1,10 @@
 robotnik_base_hw:
-  port: /dev/pcan32
+  port: /dev/pcan_rb1
 
   # Summit rubber wheels: 0.22, Summit omni wheels: 0.25, RB1: 0.1524 
-  diameter_wheel: 0.1520
-  # 24V motors: 12.52, 48V motors: 9.56, RB1 Accelerated: 7.5
-  gearbox_ratio: 9.56
+  diameter_wheel: 0.1524
+  # 24V motors: 12.52, 48V motors: 9.56, RB1 Accelerated: 7.5 (9.56?)
+  gearbox_ratio: 12.52
   # Be carefull if motors don't have enconders and you put motors_enconder: true speed will increase x 4000
   motors_encoder: true
   motors_encoder_factor: 4000
