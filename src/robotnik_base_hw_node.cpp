@@ -46,13 +46,12 @@ int main(int argc, char** argv)
     robotnik_base_hw_lib->Setup();
     robotnik_base_hw_lib->Start();
 
-    //sleep(5);
-    //robotnik_base_hw_lib->home();
 
+	 // Start the control loop
+    controller_manager::ControllerManager cm(&(*robotnik_base_hw_lib));
     robotnik_base_hw_lib->waitToBeReady();
 
-    // Start the control loop
-    controller_manager::ControllerManager cm(&(*robotnik_base_hw_lib));
+   
     ros::Rate loop_rate(50);
 
     ros::Time last_time = ros::Time::now();
