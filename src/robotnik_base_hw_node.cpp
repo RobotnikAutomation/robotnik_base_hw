@@ -22,12 +22,18 @@
 
 #include <robotnik_base_hw_lib/robotnik_base_hw.h>
 
+enum{
+	HW_STATE_INIT,
+	HW_STATE_HOMING,
+	HW_STATE_READY
+};
 
 
 // MAIN
 int main(int argc, char** argv)
 {
     ros::init(argc, argv, "robotnik_base_hw_node");
+    int state = HW_STATE_INIT;
     
     // TODO: remove debug level
     if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) { 
@@ -46,15 +52,17 @@ int main(int argc, char** argv)
     robotnik_base_hw_lib->Setup();
     robotnik_base_hw_lib->Start();
 
-
-	 // Start the control loop
+     // Start the control loop
     controller_manager::ControllerManager cm(&(*robotnik_base_hw_lib));
-    robotnik_base_hw_lib->waitToBeReady();
 
-   
     ros::Rate loop_rate(50);
-
     ros::Time last_time = ros::Time::now();
+
+    // check that system is ready. previously this was done using the robotnik_base_hw_lib->WaitToBeReady(), but it is a blocking function
+    // so now we do it separately and call the cm.update
+    robotnik_base_hw_lib->InitSystem();
+
+    last_time = ros::Time::now();
     while (ros::ok())
     {
         loop_rate.sleep();
@@ -68,8 +76,27 @@ int main(int argc, char** argv)
         robotnik_base_hw_lib->read(elapsed_time);
 
         cm.update(current_time, elapsed_time);
-
-        robotnik_base_hw_lib->write(elapsed_time);
+        
+        switch(state){
+			
+			case HW_STATE_INIT:
+				if (robotnik_base_hw_lib->IsSystemReady()) {
+					state = HW_STATE_HOMING;
+					robotnik_base_hw_lib->SendToHome();
+				}
+			break;
+			
+			case HW_STATE_HOMING:
+				if (robotnik_base_hw_lib->IsHomed()) {
+					state = HW_STATE_READY;
+				}
+			break;
+			
+			case HW_STATE_READY:
+				robotnik_base_hw_lib->write(elapsed_time);
+			break;
+		}
+		
     }
 
     // Wait until shutdown signal recieved
