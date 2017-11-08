@@ -6,7 +6,9 @@ This component is compatible with most of the Robotnik's motor hardware.
 
 ## Dependencies
 
-This component depends on the library robotnik_base_hw_lib
+This component depends on the library robotnik_base_hw_lib and the peak-can library
+
+Recommended peak-can version: 8.5.1 (https://www.peak-system.com/fileadmin/media/linux/files/peak-linux-driver-8.5.1.tar.gz)
 
 ## Installation
 
