@@ -34,6 +34,7 @@ int main(int argc, char** argv)
 {
     ros::init(argc, argv, "robotnik_base_hw_node");
     int state = HW_STATE_INIT;
+    double desired_freq_ = ROBOTNIK_DEFAULT_HZ;
     
     // TODO: remove debug level
     if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) { 
@@ -41,6 +42,9 @@ int main(int argc, char** argv)
     } 
 
     ros::NodeHandle nh("");
+    ros::NodeHandle pnh("~");
+	pnh.param<double>("desired_freq", desired_freq_, desired_freq_);
+
     // NOTE: We run the ROS loop in a separate thread as external calls such
     // as service callbacks to load controllers can block the (main) control loop
     ros::AsyncSpinner spinner(2);
@@ -55,7 +59,7 @@ int main(int argc, char** argv)
      // Start the control loop
     controller_manager::ControllerManager cm(&(*robotnik_base_hw_lib));
 
-    ros::Rate loop_rate(50);
+    ros::Rate loop_rate(desired_freq_);
     ros::Time last_time = ros::Time::now();
 
     // check that system is ready. previously this was done using the robotnik_base_hw_lib->WaitToBeReady(), but it is a blocking function
@@ -63,6 +67,7 @@ int main(int argc, char** argv)
     robotnik_base_hw_lib->InitSystem();
 
     last_time = ros::Time::now();
+    robotnik_base_hw_lib->setMotorsToRunningFrequency();
     while (ros::ok())
     {
         loop_rate.sleep();
@@ -89,6 +94,7 @@ int main(int argc, char** argv)
 			case HW_STATE_HOMING:
 				if (robotnik_base_hw_lib->IsHomed()) {
 					state = HW_STATE_READY;
+					
 				}
 			break;
 			
