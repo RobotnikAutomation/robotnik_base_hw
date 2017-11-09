@@ -1,5 +1,5 @@
 robotnik_base_hw:
-  port: /dev/pcan_rb1
+  port: /dev/pcan_base
 
   # Summit rubber wheels: 0.22, Summit omni wheels: 0.25, RB1: 0.1524 
   diameter_wheel: 0.1524
