@@ -22,7 +22,7 @@
 
 #include <robotnik_base_hw_lib/robotnik_base_hw.h>
 
-enum{
+enum {
 	HW_STATE_INIT,
 	HW_STATE_HOMING,
 	HW_STATE_READY
@@ -53,10 +53,17 @@ int main(int argc, char** argv)
     // Create the hardware interface specific to your robot
     boost::shared_ptr<RobotnikBaseHW> robotnik_base_hw_lib (new RobotnikBaseHW(nh));   
     robotnik_base_hw_lib->initHardwareInterface();
-    robotnik_base_hw_lib->Setup();
-    robotnik_base_hw_lib->Start();
+    while (ros::ok())
+    {
+        if (robotnik_base_hw_lib->Setup() == Component::ReturnValue::OK) {
+            if (robotnik_base_hw_lib->Start() == Component::ReturnValue::OK) {
+                break;
+	    	}
+        }
+        ros::Duration(5.0).sleep();
+    }
 
-     // Start the control loop
+    // Start the control loop
     controller_manager::ControllerManager cm(&(*robotnik_base_hw_lib));
 
     ros::Rate loop_rate(desired_freq_);
