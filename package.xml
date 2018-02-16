@@ -40,6 +40,7 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>robotnik_base_hw_lib</build_depend>
   <build_depend>controller_manager</build_depend>
   <build_depend>robotnik_msgs</build_depend>
   <build_depend>roscpp</build_depend>

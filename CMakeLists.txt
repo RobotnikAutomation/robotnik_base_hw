@@ -10,6 +10,7 @@ add_compile_options(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   controller_manager
   robotnik_msgs
+  robotnik_base_hw_lib
   roscpp
 )
 
