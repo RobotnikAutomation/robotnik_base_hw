@@ -73,11 +73,12 @@ int main(int argc, char** argv)
         loop_rate.sleep();
 
         ros::Time current_time = ros::Time::now();
-        ros::Duration elapsed_time = current_time - last_time;
+        ros::Duration elapsed_time(1.0/desired_freq_); // = current_time - last_time;
         last_time = current_time;
 
+		
         robotnik_base_hw_lib->update();
-        
+                      
         robotnik_base_hw_lib->read(elapsed_time);
 
         cm.update(current_time, elapsed_time);

@@ -1,19 +1,25 @@
 robotnik_base_hw:
-  port: /dev/pcan_rb1
+  port: /dev/pcan32
 
   # Summit rubber wheels: 0.22, Summit omni wheels: 0.25, RB1: 0.1524 
   diameter_wheel: 0.1524
   # 24V motors: 12.52, 48V motors: 9.56, RB1 Accelerated: 7.5 (9.56?)
-  gearbox_ratio: 12.52
+  gearbox_ratio: 91
   # Be carefull if motors don't have enconders and you put motors_enconder: true speed will increase x 4000
   motors_encoder: true
-  motors_encoder_factor: 4000
+  motors_encoder_factor: 8192
 
-  joint_name: [rb1_base_left_wheel_joint,rb1_base_right_wheel_joint]
-  joint_can_id: [1,2]
-  joint_type: [vel,vel]
-  joint_home_offset: [0,0]
-  joint_spin: [1,-1]
+#  joint_name: [gripper_motorup_joint,gripper_motordown_joint]
+#  joint_can_id: [1,2]
+#  joint_type: [pos,pos]
+#  joint_home_offset: [0,0]
+#  joint_spin: [1,1]
+  
+  joint_name: [gripper_motor_down_joint,gripper_motor_up_joint,gripper_prismatic_joint,gripper_revolute_joint]
+  joint_can_id: [1,2,0,0]
+  joint_type: [pos,pos,tool,tool]
+  joint_home_offset: [0,0,0,0]
+  joint_spin: [1,1,1,1]
 
 # Pseudo joint for elevator system 
 # Joint with two position dependant on digital outputs 
@@ -22,7 +28,7 @@ robotnik_base_hw:
 # If digital_output_high=false and digital_output_low=true -> elevator position = elevator_low_pos
 #
 #
-  has_elevator: true
+  has_elevator: false
   joint_elevator_name: rb1_base_elevator_platform_joint
   elevator_high_pos: 0.03
   elevator_low_pos: 0.0
@@ -85,7 +91,7 @@ hardware_interface:
      #- joint_back_right_wheel
      #- joint_back_left_wheel
 
-     - rb1_base_left_wheel_joint
-     - rb1_base_right_wheel_joint
+     - gripper_motor_up_joint
+     - gripper_motor_down_joint
    
      
