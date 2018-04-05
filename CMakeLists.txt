@@ -55,7 +55,6 @@ add_dependencies(${PROJECT_NAME}_node robotnik_msgs_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
  target_link_libraries(${PROJECT_NAME}_node
-   robotnik_base_hw
    ${catkin_LIBRARIES}
 )
 
