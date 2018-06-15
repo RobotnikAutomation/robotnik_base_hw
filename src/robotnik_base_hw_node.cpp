@@ -31,13 +31,131 @@ enum
   HW_STATE_RESTART
 };
 
-bool must_restart = false;
-bool resetHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
-{
-  must_restart = true;
-  return true;
-};
 
+class RobotnikBaseHWMain
+{
+  public:
+    RobotnikBaseHWMain()
+    {
+      state = HW_STATE_INIT;
+      desired_freq_ = ROBOTNIK_DEFAULT_HZ;
+
+    }
+
+    void rosSetup()
+    {  
+      pnh_.param<double>("desired_freq", desired_freq_, desired_freq_);
+      reset_service_ = pnh_.advertiseService("reset_hw", &RobotnikBaseHWMain::resetHW, this);
+    }
+
+    void run()
+    {
+      // Create the hardware interface specific to your robot
+      robotnik_base_hw_lib_.reset(new RobotnikBaseHW(nh_));
+      robotnik_base_hw_lib_->initHardwareInterface();
+      while (ros::ok())
+      {
+        if (robotnik_base_hw_lib_->Setup() == Component::ReturnValue::OK)
+        {
+          if (robotnik_base_hw_lib_->Start() == Component::ReturnValue::OK)
+          {
+            break;
+          }
+        }
+        ros::Duration(5.0).sleep();
+      }
+
+      // Start the control loop
+      controller_manager_.reset(new controller_manager::ControllerManager(&(*robotnik_base_hw_lib_)));
+
+      ros::Rate loop_rate(desired_freq_);
+      ros::Time last_time = ros::Time::now();
+
+      // check that system is ready. previously this was done using the robotnik_base_hw_lib_->WaitToBeReady(), but it is a
+      // blocking function
+      // so now we do it separately and call the controller_manager_.update
+      robotnik_base_hw_lib_->InitSystem();
+
+      last_time = ros::Time::now();
+      robotnik_base_hw_lib_->setMotorsToRunningFrequency();
+      while (ros::ok())
+      {
+        loop_rate.sleep();
+
+        ros::Time current_time = ros::Time::now();
+        ros::Duration elapsed_time = current_time - last_time;
+        last_time = current_time;
+
+        robotnik_base_hw_lib_->update();
+
+        robotnik_base_hw_lib_->read(elapsed_time);
+
+        double time_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
+        ROS_INFO_STREAM_THROTTLE(0.5, "\t\ttime in current: " << time_in_current_state);
+        if (time_in_current_state > 5) 
+        {
+          if (robotnik_base_hw_lib_->GetComponentState() == Component::EMERGENCY_STATE)
+          {
+            ROS_WARN("I'm going to restart");
+            must_restart_ = true;
+          }
+        }
+
+        controller_manager_->update(current_time, elapsed_time);
+
+        if (must_restart_)
+        {
+          must_restart_ = false;
+          state = HW_STATE_RESTART;
+        }
+
+        switch (state)
+        {
+          case HW_STATE_INIT:
+            if (robotnik_base_hw_lib_->IsSystemReady())
+            {
+              state = HW_STATE_HOMING;
+              bool force_home = false;
+              robotnik_base_hw_lib_->SendToHome(force_home);
+            }
+            break;
+
+          case HW_STATE_HOMING:
+            if (robotnik_base_hw_lib_->IsHomed())
+            {
+              state = HW_STATE_READY;
+            }
+            break;
+
+          case HW_STATE_READY:
+            robotnik_base_hw_lib_->write(elapsed_time);
+            break;
+          case HW_STATE_RESTART:
+            robotnik_base_hw_lib_->Stop();
+            robotnik_base_hw_lib_->Start();
+            state = HW_STATE_INIT;
+            break;
+        }
+      }
+    }
+
+  private:
+    ros::NodeHandle nh_;
+    ros::NodeHandle pnh_;
+    int state;
+    double desired_freq_;
+    ros::ServiceServer reset_service_;
+    bool must_restart_;
+    boost::shared_ptr<RobotnikBaseHW> robotnik_base_hw_lib_;
+    boost::shared_ptr<controller_manager::ControllerManager> controller_manager_;
+
+  public:
+    bool resetHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
+    {
+      must_restart_ = true;
+      return true;
+    }
+};
 
 
 
@@ -45,8 +163,6 @@ bool resetHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "robotnik_base_hw_node");
-  int state = HW_STATE_INIT;
-  double desired_freq_ = ROBOTNIK_DEFAULT_HZ;
 
   // TODO: remove debug level
   if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
@@ -54,103 +170,17 @@ int main(int argc, char** argv)
     ros::console::notifyLoggerLevelsChanged();
   }
 
-  ros::NodeHandle nh("");
-  ros::NodeHandle pnh("~");
-  pnh.param<double>("desired_freq", desired_freq_, desired_freq_);
-  ros::ServiceServer service = pnh.advertiseService("reset_hw", resetHW);
 
   // NOTE: We run the ROS loop in a separate thread as external calls such
   // as service callbacks to load controllers can block the (main) control loop
   ros::AsyncSpinner spinner(2);
   spinner.start();
 
-  // Create the hardware interface specific to your robot
-  boost::shared_ptr<RobotnikBaseHW> robotnik_base_hw_lib(new RobotnikBaseHW(nh));
-  robotnik_base_hw_lib->initHardwareInterface();
-  while (ros::ok())
-  {
-    if (robotnik_base_hw_lib->Setup() == Component::ReturnValue::OK)
-    {
-      if (robotnik_base_hw_lib->Start() == Component::ReturnValue::OK)
-      {
-        break;
-      }
-    }
-    ros::Duration(5.0).sleep();
-  }
+  RobotnikBaseHWMain base;
 
-  // Start the control loop
-  controller_manager::ControllerManager cm(&(*robotnik_base_hw_lib));
+  base.rosSetup();
+  base.run();
 
-  ros::Rate loop_rate(desired_freq_);
-  ros::Time last_time = ros::Time::now();
-
-  // check that system is ready. previously this was done using the robotnik_base_hw_lib->WaitToBeReady(), but it is a
-  // blocking function
-  // so now we do it separately and call the cm.update
-  robotnik_base_hw_lib->InitSystem();
-
-  last_time = ros::Time::now();
-  robotnik_base_hw_lib->setMotorsToRunningFrequency();
-  while (ros::ok())
-  {
-    loop_rate.sleep();
-
-    ros::Time current_time = ros::Time::now();
-    ros::Duration elapsed_time = current_time - last_time;
-    last_time = current_time;
-
-    robotnik_base_hw_lib->update();
-
-    robotnik_base_hw_lib->read(elapsed_time);
-
-    double time_in_current_state = robotnik_base_hw_lib->GetTimeInCurrentState();
-    ROS_INFO_STREAM_THROTTLE(0.5, "\t\ttime in current: " << time_in_current_state);
-    if (time_in_current_state > 5) 
-    {
-       if (robotnik_base_hw_lib->GetComponentState() == Component::EMERGENCY_STATE)
-       {
-         ROS_WARN("I'm going to restart");
-         must_restart = true;
-       }
-    }
-    
-    cm.update(current_time, elapsed_time);
-
-    if (must_restart)
-    {
-      must_restart = false;
-      state = HW_STATE_RESTART;
-    }
-
-    switch (state)
-    {
-      case HW_STATE_INIT:
-        if (robotnik_base_hw_lib->IsSystemReady())
-        {
-          state = HW_STATE_HOMING;
-          bool force_home = false;
-          robotnik_base_hw_lib->SendToHome(force_home);
-        }
-        break;
-
-      case HW_STATE_HOMING:
-        if (robotnik_base_hw_lib->IsHomed())
-        {
-          state = HW_STATE_READY;
-        }
-        break;
-
-      case HW_STATE_READY:
-        robotnik_base_hw_lib->write(elapsed_time);
-        break;
-      case HW_STATE_RESTART:
-        robotnik_base_hw_lib->Stop();
-        robotnik_base_hw_lib->Start();
-        state = HW_STATE_INIT;
-        break;
-    }
-  }
 
   // Wait until shutdown signal recieved
   ros::waitForShutdown();
