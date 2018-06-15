@@ -35,6 +35,7 @@ int main(int argc, char** argv)
     ros::init(argc, argv, "robotnik_base_hw_node");
     int state = HW_STATE_INIT;
     double desired_freq_ = ROBOTNIK_DEFAULT_HZ;
+    bool force_home = false;
     
     // TODO: remove debug level
     if( ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug) ) { 
@@ -94,7 +95,7 @@ int main(int argc, char** argv)
 			case HW_STATE_INIT:
 				if (robotnik_base_hw_lib->IsSystemReady()) {
 					state = HW_STATE_HOMING;
-					robotnik_base_hw_lib->SendToHome();
+					robotnik_base_hw_lib->SendToHome(force_home);
 				}
 			break;
 			

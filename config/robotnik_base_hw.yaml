@@ -15,21 +15,19 @@ robotnik_base_hw:
   joint_home_offset: [0,0]
   joint_spin: [1,-1]
 
-# Pseudo joint for elevator system 
-# Joint with two position dependant on digital outputs 
-#
-# If digital_output_high=true and digital_output_low=false -> elevator position = elevator_high_pos
-# If digital_output_high=false and digital_output_low=true -> elevator position = elevator_low_pos
-#
-#
-  has_elevator: true
-  joint_elevator_name: rb1_base_elevator_platform_joint
-  elevator_high_pos: 0.03
-  elevator_low_pos: 0.0
-  elevator_digital_output_high: 3
-  elevator_digital_output_low: 2 
-  elevator_digital_input_high: 3
-  elevator_digital_input_low: 2 
+  #home_method: 1
+  #check_limit_position_reached: false
+
+  #joint_home_offset: [0, 0, 0, 0, 0]
+
+  #joint_home_required: [true, false, false, false, false]
+
+  #joint_home_at_startup: [false, false, false, false, false]
+
+  #low_position_limit: [-5000000, -1.79769e+300, -1.79769e+300, -1.79769e+300, -1.79769e+300]
+
+  #high_position_limit: [5000000, 1.79769e+300, 1.79769e+300, 1.79769e+300, 1.79769e+300]
+
 
 
 #  joint_name:  [front_left_wheel_joint,
