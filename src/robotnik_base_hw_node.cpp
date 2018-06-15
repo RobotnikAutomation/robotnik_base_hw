@@ -10,6 +10,7 @@
 #include <std_msgs/Int32.h>
 #include <std_msgs/Bool.h>  //
 #include <sensor_msgs/JointState.h>
+#include <std_srvs/Trigger.h>
 
 #include <robotnik_msgs/MotorStatus.h>
 
@@ -26,8 +27,19 @@ enum
 {
   HW_STATE_INIT,
   HW_STATE_HOMING,
-  HW_STATE_READY
+  HW_STATE_READY,
+  HW_STATE_RESTART
 };
+
+bool must_restart = false;
+bool resetHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
+{
+  must_restart = true;
+  return true;
+};
+
+
+
 
 // MAIN
 int main(int argc, char** argv)
@@ -35,7 +47,6 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "robotnik_base_hw_node");
   int state = HW_STATE_INIT;
   double desired_freq_ = ROBOTNIK_DEFAULT_HZ;
-  bool force_home = false;
 
   // TODO: remove debug level
   if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
@@ -46,6 +57,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nh("");
   ros::NodeHandle pnh("~");
   pnh.param<double>("desired_freq", desired_freq_, desired_freq_);
+  ros::ServiceServer service = pnh.advertiseService("reset_hw", resetHW);
 
   // NOTE: We run the ROS loop in a separate thread as external calls such
   // as service callbacks to load controllers can block the (main) control loop
@@ -92,7 +104,24 @@ int main(int argc, char** argv)
 
     robotnik_base_hw_lib->read(elapsed_time);
 
+    double time_in_current_state = robotnik_base_hw_lib->GetTimeInCurrentState();
+    ROS_INFO_STREAM_THROTTLE(0.5, "\t\ttime in current: " << time_in_current_state);
+    if (time_in_current_state > 5) 
+    {
+       if (robotnik_base_hw_lib->GetComponentState() == Component::EMERGENCY_STATE)
+       {
+         ROS_WARN("I'm going to restart");
+         must_restart = true;
+       }
+    }
+    
     cm.update(current_time, elapsed_time);
+
+    if (must_restart)
+    {
+      must_restart = false;
+      state = HW_STATE_RESTART;
+    }
 
     switch (state)
     {
@@ -100,6 +129,7 @@ int main(int argc, char** argv)
         if (robotnik_base_hw_lib->IsSystemReady())
         {
           state = HW_STATE_HOMING;
+          bool force_home = false;
           robotnik_base_hw_lib->SendToHome(force_home);
         }
         break;
@@ -113,6 +143,11 @@ int main(int argc, char** argv)
 
       case HW_STATE_READY:
         robotnik_base_hw_lib->write(elapsed_time);
+        break;
+      case HW_STATE_RESTART:
+        robotnik_base_hw_lib->Stop();
+        robotnik_base_hw_lib->Start();
+        state = HW_STATE_INIT;
         break;
     }
   }
