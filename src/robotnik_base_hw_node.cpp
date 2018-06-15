@@ -39,12 +39,16 @@ class RobotnikBaseHWMain
     {
       state = HW_STATE_INIT;
       desired_freq_ = ROBOTNIK_DEFAULT_HZ;
-
     }
 
     void rosSetup()
     {  
       pnh_.param<double>("desired_freq", desired_freq_, desired_freq_);
+      
+      double period = 5;
+      pnh_.param<double>("recovery_period", period, period);
+      recovery_period_ = ros::Duration(period);
+      
       reset_service_ = pnh_.advertiseService("reset_hw", &RobotnikBaseHWMain::resetHW, this);
     }
 
@@ -91,21 +95,20 @@ class RobotnikBaseHWMain
         robotnik_base_hw_lib_->read(elapsed_time);
 
         double time_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
-        ROS_INFO_STREAM_THROTTLE(0.5, "\t\ttime in current: " << time_in_current_state);
-        if (time_in_current_state > 5) 
+        if (time_in_current_state > recovery_period_.toSec()) 
         {
-          if (robotnik_base_hw_lib_->GetComponentState() == Component::EMERGENCY_STATE)
+          if (robotnik_base_hw_lib_->GetComponentState() == Component::EMERGENCY_STATE and true)
+         //     not robotnik_base_hw_lib_->isSecurityEnabled())
           {
-            ROS_WARN("I'm going to restart");
-            must_restart_ = true;
+            ROS_WARN_STREAM("RobotnikBaseHW is in emergency for more than " << recovery_period_.toSec() << " seconds, and security is not enabled. I'm trying to restart the system");
+            must_restart_hw_ = true;
           }
         }
 
         controller_manager_->update(current_time, elapsed_time);
 
-        if (must_restart_)
+        if (must_restart_hw_)
         {
-          must_restart_ = false;
           state = HW_STATE_RESTART;
         }
 
@@ -131,6 +134,7 @@ class RobotnikBaseHWMain
             robotnik_base_hw_lib_->write(elapsed_time);
             break;
           case HW_STATE_RESTART:
+            must_restart_hw_ = false;
             robotnik_base_hw_lib_->Stop();
             robotnik_base_hw_lib_->Start();
             state = HW_STATE_INIT;
@@ -144,15 +148,17 @@ class RobotnikBaseHWMain
     ros::NodeHandle pnh_;
     int state;
     double desired_freq_;
-    ros::ServiceServer reset_service_;
-    bool must_restart_;
+    bool must_restart_hw_;
     boost::shared_ptr<RobotnikBaseHW> robotnik_base_hw_lib_;
     boost::shared_ptr<controller_manager::ControllerManager> controller_manager_;
+    
+    ros::ServiceServer reset_service_;
+    ros::Duration recovery_period_;
 
   public:
     bool resetHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
     {
-      must_restart_ = true;
+      must_restart_hw_ = true;
       return true;
     }
 };
