@@ -138,6 +138,8 @@ public:
         case HW_STATE_RESTART:
           must_restart_hw_ = false;
           robotnik_base_hw_lib_->Stop();
+          ros::Duration(5).sleep();
+          robotnik_base_hw_lib_->RestartCan();
           robotnik_base_hw_lib_->destroyMotorDrives();
           robotnik_base_hw_lib_->createMotorDrives();
           robotnik_base_hw_lib_->Start();
@@ -145,51 +147,50 @@ public:
           break;
       }
     }
-  }
 
-private:
-  ros::NodeHandle nh_;
-  ros::NodeHandle pnh_;
-  int state;
-  double desired_freq_;
-  bool must_restart_hw_;
-  boost::shared_ptr<RobotnikBaseHW> robotnik_base_hw_lib_;
-  boost::shared_ptr<controller_manager::ControllerManager> controller_manager_;
+  private:
+    ros::NodeHandle nh_;
+    ros::NodeHandle pnh_;
+    int state;
+    double desired_freq_;
+    bool must_restart_hw_;
+    boost::shared_ptr<RobotnikBaseHW> robotnik_base_hw_lib_;
+    boost::shared_ptr<controller_manager::ControllerManager> controller_manager_;
 
-  ros::ServiceServer reset_service_;
-  ros::Duration recovery_period_;
+    ros::ServiceServer reset_service_;
+    ros::Duration recovery_period_;
 
-public:
-  bool resetHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
+  public:
+    bool resetHW(std_srvs::Trigger::Request & req, std_srvs::Trigger::Response & res)
+    {
+      must_restart_hw_ = true;
+      return true;
+    }
+  };
+
+  // MAIN
+  int main(int argc, char** argv)
   {
-    must_restart_hw_ = true;
-    return true;
+    ros::init(argc, argv, "robotnik_base_hw_node");
+
+    // TODO: remove debug level
+    if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
+    {
+      ros::console::notifyLoggerLevelsChanged();
+    }
+
+    // NOTE: We run the ROS loop in a separate thread as external calls such
+    // as service callbacks to load controllers can block the (main) control loop
+    ros::AsyncSpinner spinner(2);
+    spinner.start();
+
+    RobotnikBaseHWMain base;
+
+    base.rosSetup();
+    base.run();
+
+    // Wait until shutdown signal recieved
+    ros::waitForShutdown();
+
+    return 0;
   }
-};
-
-// MAIN
-int main(int argc, char** argv)
-{
-  ros::init(argc, argv, "robotnik_base_hw_node");
-
-  // TODO: remove debug level
-  if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
-  {
-    ros::console::notifyLoggerLevelsChanged();
-  }
-
-  // NOTE: We run the ROS loop in a separate thread as external calls such
-  // as service callbacks to load controllers can block the (main) control loop
-  ros::AsyncSpinner spinner(2);
-  spinner.start();
-
-  RobotnikBaseHWMain base;
-
-  base.rosSetup();
-  base.run();
-
-  // Wait until shutdown signal recieved
-  ros::waitForShutdown();
-
-  return 0;
-}
