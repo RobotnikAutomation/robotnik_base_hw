@@ -138,6 +138,8 @@ public:
         case HW_STATE_RESTART:
           must_restart_hw_ = false;
           robotnik_base_hw_lib_->Stop();
+          robotnik_base_hw_lib_->destroyMotorDrives();
+          robotnik_base_hw_lib_->createMotorDrives();
           robotnik_base_hw_lib_->Start();
           state = HW_STATE_INIT;
           break;
