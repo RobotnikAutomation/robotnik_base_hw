@@ -136,6 +136,8 @@ class RobotnikBaseHWMain
           case HW_STATE_RESTART:
             must_restart_hw_ = false;
             robotnik_base_hw_lib_->Stop();
+            ros::Duration(5).sleep();
+            robotnik_base_hw_lib_->RestartCan();
             robotnik_base_hw_lib_->Start();
             state = HW_STATE_INIT;
             break;
