@@ -6,9 +6,12 @@ This component is compatible with most of the Robotnik's motor hardware.
 
 ## Dependencies
 
+* robotnik_base_hw_lib
+  * Branch/version: tag kinetic-0.9.4 (binary in lib folder)
+
 * robotnik_msgs 
   * Repository: https://github.com/RobotnikAutomation/robotnik_msgs
-  * Branch/version: kinetic-devel (tag kinetic-0.9.3) 
+  * Branch/version: tag kinetic-devel-0.2.4
 
 
 * peak-linux-driver
