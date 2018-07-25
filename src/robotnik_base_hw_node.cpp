@@ -97,8 +97,7 @@ public:
       double time_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
       if (time_in_current_state > recovery_period_.toSec())
       {
-        if (robotnik_base_hw_lib_->GetComponentState() == Component::EMERGENCY_STATE and true)
-        //     not robotnik_base_hw_lib_->isSecurityEnabled())
+        if (robotnik_base_hw_lib_->GetComponentState() == Component::EMERGENCY_STATE and not robotnik_base_hw_lib_->isSecurityEnabled())
         {
           ROS_WARN_STREAM("RobotnikBaseHW is in emergency for more than "
                           << recovery_period_.toSec()
