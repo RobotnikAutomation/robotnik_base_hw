@@ -15,6 +15,7 @@ robotnik_base_hw:
   joint_home_offset: [0,0]
   joint_spin: [1,-1]
 
+  auto_restart: false
   #home_method: 1
   #check_limit_position_reached: false
 

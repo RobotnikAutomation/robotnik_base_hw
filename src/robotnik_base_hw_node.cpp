@@ -43,11 +43,14 @@ public:
   void rosSetup()
   {
     pnh_.param<double>("desired_freq", desired_freq_, desired_freq_);
-
+   
+    auto_restart_enabled_ = false;
+    pnh_.param<bool>("auto_restart", auto_restart_enabled_, auto_restart_enabled_);
+ 
     double period = 5;
     pnh_.param<double>("recovery_period", period, period);
     recovery_period_ = ros::Duration(period);
-
+    
     reset_service_ = pnh_.advertiseService("reset_hw", &RobotnikBaseHWMain::resetHW, this);
   }
 
@@ -97,13 +100,21 @@ public:
       double time_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
       if (time_in_current_state > recovery_period_.toSec())
       {
-        if (robotnik_base_hw_lib_->GetComponentState() == Component::EMERGENCY_STATE and not robotnik_base_hw_lib_->isSecurityEnabled())
+        if (robotnik_base_hw_lib_->GetComponentState() == Component::EMERGENCY_STATE and not robotnik_base_hw_lib_->isSafetyEnabled())
         {
-          ROS_WARN_STREAM("RobotnikBaseHW is in emergency for more than "
-                          << recovery_period_.toSec()
-                          << " seconds, and security is not enabled. I'm trying to restart the system");
-          must_restart_hw_ = true;
+          if (auto_restart_enabled_ == true) {
+            ROS_WARN_STREAM("RobotnikBaseHW is in emergency for more than "
+                            << recovery_period_.toSec()
+                            << " seconds, and safety is not enabled. I'm trying to restart the system because I have the auto restart enabled");
+            must_restart_hw_ = true;
+          }
+          else {
+            ROS_WARN_STREAM("RobotnikBaseHW was in emergency for more than "
+                            << recovery_period_.toSec()
+                            << " seconds, and safety is not enabled, but I have auto restart DISABLED. I am not trying to restart the system");
+          }
         }
+        
       }
 
       controller_manager_->update(current_time, elapsed_time);
@@ -153,6 +164,8 @@ public:
     int state;
     double desired_freq_;
     bool must_restart_hw_;
+    bool auto_restart_enabled_;
+
     boost::shared_ptr<RobotnikBaseHW> robotnik_base_hw_lib_;
     boost::shared_ptr<controller_manager::ControllerManager> controller_manager_;
 
