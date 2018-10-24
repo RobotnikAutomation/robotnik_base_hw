@@ -1,6 +1,13 @@
 robotnik_base_hw:
   port: /dev/pcan_base
 
+  desired_freq: 150.0
+  
+  # if true, tries to recover from fatal errors in hw, mostly after pressing e-stop. must have a recovery_period set
+  auto_recovery: true
+  # period in sec between recovery attempts
+  recovery_period: 10
+  
   # Summit rubber wheels: 0.22, Summit omni wheels: 0.25, RB1: 0.1524 
   diameter_wheel: 0.1524
   # 24V motors: 12.52, 48V motors: 9.56, RB1 Accelerated: 7.5 (9.56?)
