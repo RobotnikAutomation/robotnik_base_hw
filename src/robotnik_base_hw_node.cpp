@@ -51,10 +51,10 @@ public:
 
     auto_recovery_ = false;
     pnh_.param<bool>("auto_recovery", auto_recovery_, auto_recovery_);
-    ROS_WARN_STREAM(pnh_.resolveName("auto_recovery"));
+
     if (auto_recovery_ == true and period == 0)
     {
-      ROS_WARN_STREAM("RobotnikBaseHW: you set auto_recovery, but a recovery period of 0. This is non sense. I "
+      ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW: you set auto_recovery, but a recovery period of 0. This is non sense. I "
                       "will disable auto recovery");
       auto_recovery_ = false;
     }
@@ -117,14 +117,14 @@ public:
           {
             if (auto_recovery_ == true)
             {
-              ROS_WARN_STREAM("RobotnikBaseHW is in emergency for more than "
+              ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
                               << recovery_period_.toSec()
                               << " seconds, but safety is enabled and auto recovery is enabled, so "
                                  "let's wait until safety is disable to try to recover from this");
             }
             else
             {
-              ROS_WARN_STREAM("RobotnikBaseHW is in emergency for more than "
+              ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
                               << recovery_period_.toSec()
                               << " seconds, but safety is enabled and auto recovery is not enabled, "
                                  "maybe I cannot                          recover from this when safety "
@@ -135,13 +135,13 @@ public:
           {
             if (auto_recovery_ == false)
             {
-              ROS_WARN_STREAM("RobotnikBaseHW is in emergency for more than "
+              ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
                               << recovery_period_.toSec() << " seconds, safety is not enabled but auto "
                               << " recovery is not enabled. Maybe I will keep in this state until the end of time");
             }
             else
             {
-              ROS_WARN_STREAM("RobotnikBaseHW is in emergency for more than "
+              ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
                               << recovery_period_.toSec() << " seconds, safety is not enabled and auto recovery "
                                                              "is enabled. I'm trying to restart the system");
               must_reset_hw_ = true;
