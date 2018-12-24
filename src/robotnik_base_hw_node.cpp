@@ -34,19 +34,30 @@ enum
 class RobotnikBaseHWMain
 {
 public:
-  RobotnikBaseHWMain()
+  RobotnikBaseHWMain() : nh_(""), pnh_("~")
   {
     state = HW_STATE_INIT;
     desired_freq_ = ROBOTNIK_DEFAULT_HZ;
+    must_reset_hw_ = false;
   }
 
   void rosSetup()
   {
     pnh_.param<double>("desired_freq", desired_freq_, desired_freq_);
 
-    double period = 5;
+    double period = 10;
     pnh_.param<double>("recovery_period", period, period);
     recovery_period_ = ros::Duration(period);
+
+    auto_recovery_ = false;
+    pnh_.param<bool>("auto_recovery", auto_recovery_, auto_recovery_);
+
+    if (auto_recovery_ == true and period == 0)
+    {
+      ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW: you set auto_recovery, but a recovery period of 0. This is non sense. I "
+                                              "will disable auto recovery");
+      auto_recovery_ = false;
+    }
 
     reset_service_ = pnh_.advertiseService("reset_hw", &RobotnikBaseHWMain::resetHW, this);
   }
@@ -82,6 +93,7 @@ public:
 
     last_time = ros::Time::now();
     robotnik_base_hw_lib_->setMotorsToRunningFrequency();
+    double last_time_check_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
     while (ros::ok())
     {
       loop_rate.sleep();
@@ -95,20 +107,52 @@ public:
       robotnik_base_hw_lib_->read(elapsed_time);
 
       double time_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
-      if (time_in_current_state > recovery_period_.toSec())
+      if ((time_in_current_state - last_time_check_in_current_state) > recovery_period_.toSec())
       {
-        if (robotnik_base_hw_lib_->GetComponentState() == Component::EMERGENCY_STATE and not robotnik_base_hw_lib_->isSafetyEnabled())
+        last_time_check_in_current_state = time_in_current_state;
+
+        if (robotnik_base_hw_lib_->GetComponentState() == Component::EMERGENCY_STATE)
         {
-          ROS_WARN_STREAM("RobotnikBaseHW is in emergency for more than "
-                          << recovery_period_.toSec()
-                          << " seconds, and security is not enabled. I'm trying to restart the system");
-          must_restart_hw_ = true;
+          if (robotnik_base_hw_lib_->isSafetyEnabled())
+          {
+            if (auto_recovery_ == true)
+            {
+              ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
+                                                          << recovery_period_.toSec()
+                                                          << " seconds, but safety is enabled and auto recovery is enabled, so "
+                                                             "let's wait until safety is disable to try to recover from this");
+            }
+            else
+            {
+              ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
+                                                          << recovery_period_.toSec()
+                                                          << " seconds, but safety is enabled and auto recovery is not enabled, "
+                                                             "maybe I cannot                          recover from this when safety "
+                                                             "is disabled");
+            }
+          }
+          else
+          {
+            if (auto_recovery_ == false)
+            {
+              ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
+                                                          << recovery_period_.toSec() << " seconds, safety is not enabled but auto "
+                                                          << " recovery is not enabled. Maybe I will keep in this state until the end of time");
+            }
+            else
+            {
+              ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
+                                                          << recovery_period_.toSec() << " seconds, safety is not enabled and auto recovery "
+                                                                                         "is enabled. I'm trying to restart the system");
+              must_reset_hw_ = true;
+            }
+          }
         }
       }
 
       controller_manager_->update(current_time, elapsed_time);
 
-      if (must_restart_hw_)
+      if (must_reset_hw_)
       {
         state = HW_STATE_RESTART;
       }
@@ -136,7 +180,7 @@ public:
         robotnik_base_hw_lib_->write(elapsed_time);
         break;
       case HW_STATE_RESTART:
-        must_restart_hw_ = false;
+        must_reset_hw_ = false;
         robotnik_base_hw_lib_->Stop();
         robotnik_base_hw_lib_->ShutDown();
         robotnik_base_hw_lib_->ResetIngeniaDrives();
@@ -155,17 +199,21 @@ private:
   ros::NodeHandle pnh_;
   int state;
   double desired_freq_;
-  bool must_restart_hw_;
+  // must reset changes HW_STATE machine to the reset state. Can be set due to the auto recovery or the reset service
+  bool must_reset_hw_;
+
+  bool auto_recovery_;
+  ros::Duration recovery_period_;
+
   boost::shared_ptr<RobotnikBaseHW> robotnik_base_hw_lib_;
   boost::shared_ptr<controller_manager::ControllerManager> controller_manager_;
 
   ros::ServiceServer reset_service_;
-  ros::Duration recovery_period_;
 
 public:
   bool resetHW(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
   {
-    must_restart_hw_ = true;
+    must_reset_hw_ = true;
     return true;
   }
 };
