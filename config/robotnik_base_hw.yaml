@@ -1,6 +1,13 @@
 robotnik_base_hw:
   port: /dev/pcan_base
 
+  desired_freq: 150.0
+  
+  # if true, tries to recover from fatal errors in hw, mostly after pressing e-stop. must have a recovery_period set
+  auto_recovery: true
+  # period in sec between recovery attempts
+  recovery_period: 10
+  
   # Summit rubber wheels: 0.22, Summit omni wheels: 0.25, RB1: 0.1524 
   diameter_wheel: 0.1524
   # 24V motors: 12.52, 48V motors: 9.56, RB1 Accelerated: 7.5 (9.56?)
@@ -15,6 +22,7 @@ robotnik_base_hw:
   joint_home_offset: [0,0]
   joint_spin: [1,-1]
 
+  auto_restart: false
   #home_method: 1
   #check_limit_position_reached: false
 
@@ -41,7 +49,8 @@ robotnik_base_hw:
 #
 #  joint_can_id: [1,2,3,4,5,6,7,8]
 #
-#  joint_type: [vel,vel,vel,vel,pos,pos,pos,pos]
+#  joint_type: [vel,vel,vel,vel,pos,pos,pos,pos] (or ingenia_abs_pos / ingenia_rel_pos)
+#  joint_ingenia_offset: [23.63, 17.2484784024, 21.0898454196, 16.60151781] (for abs ingenia drives)
 #
 #  joint_home_offset: [0,0,0,0,-441807,-437669,-435603,-433906]  
 
@@ -87,3 +96,4 @@ hardware_interface:
      - rb1_base_right_wheel_joint
    
      
+

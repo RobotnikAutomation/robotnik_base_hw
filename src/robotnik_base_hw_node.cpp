@@ -5,10 +5,10 @@
 #include <vector>
 
 #include <ros/ros.h>
-#include <std_msgs/Float32.h>  // battery, gyro, and steering angle
-#include <std_msgs/Float64.h>  // battery, gyro, and steering angle
+#include <std_msgs/Float32.h> // battery, gyro, and steering angle
+#include <std_msgs/Float64.h> // battery, gyro, and steering angle
 #include <std_msgs/Int32.h>
-#include <std_msgs/Bool.h>  //
+#include <std_msgs/Bool.h> //
 #include <sensor_msgs/JointState.h>
 #include <std_srvs/Trigger.h>
 
@@ -97,7 +97,7 @@ public:
       double time_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
       if (time_in_current_state > recovery_period_.toSec())
       {
-        if (robotnik_base_hw_lib_->GetComponentState() == Component::EMERGENCY_STATE and not robotnik_base_hw_lib_->isSecurityEnabled())
+        if (robotnik_base_hw_lib_->GetComponentState() == Component::EMERGENCY_STATE and not robotnik_base_hw_lib_->isSafetyEnabled())
         {
           ROS_WARN_STREAM("RobotnikBaseHW is in emergency for more than "
                           << recovery_period_.toSec()
@@ -115,81 +115,84 @@ public:
 
       switch (state)
       {
-        case HW_STATE_INIT:
-          if (robotnik_base_hw_lib_->IsSystemReady())
-          {
-            state = HW_STATE_HOMING;
-            bool force_home = false;
-            robotnik_base_hw_lib_->SendToHome(force_home);
-          }
-          break;
+      case HW_STATE_INIT:
+        if (robotnik_base_hw_lib_->IsSystemReady())
+        {
+          state = HW_STATE_HOMING;
+          bool force_home = false;
+          robotnik_base_hw_lib_->ResetIngeniaDrives();
+          robotnik_base_hw_lib_->SendToHome(force_home);
+        }
+        break;
 
-        case HW_STATE_HOMING:
-          if (robotnik_base_hw_lib_->IsHomed())
-          {
-            state = HW_STATE_READY;
-          }
-          break;
+      case HW_STATE_HOMING:
+        if (robotnik_base_hw_lib_->IsHomed())
+        {
+          state = HW_STATE_READY;
+        }
+        break;
 
-        case HW_STATE_READY:
-          robotnik_base_hw_lib_->write(elapsed_time);
-          break;
-        case HW_STATE_RESTART:
-          must_restart_hw_ = false;
-          robotnik_base_hw_lib_->Stop();
-          robotnik_base_hw_lib_->ShutDown();
-          robotnik_base_hw_lib_->destroyMotorDrives();
-          robotnik_base_hw_lib_->createMotorDrives();
-          robotnik_base_hw_lib_->Setup();
-          robotnik_base_hw_lib_->Start();
-          state = HW_STATE_INIT;
-          break;
+      case HW_STATE_READY:
+        robotnik_base_hw_lib_->write(elapsed_time);
+        break;
+      case HW_STATE_RESTART:
+        must_restart_hw_ = false;
+        robotnik_base_hw_lib_->Stop();
+        robotnik_base_hw_lib_->ShutDown();
+        robotnik_base_hw_lib_->ResetIngeniaDrives();
+        robotnik_base_hw_lib_->destroyMotorDrives();
+        robotnik_base_hw_lib_->createMotorDrives();
+        robotnik_base_hw_lib_->Setup();
+        robotnik_base_hw_lib_->Start();
+        state = HW_STATE_INIT;
+        break;
       }
     }
-}
-  private:
-    ros::NodeHandle nh_;
-    ros::NodeHandle pnh_;
-    int state;
-    double desired_freq_;
-    bool must_restart_hw_;
-    boost::shared_ptr<RobotnikBaseHW> robotnik_base_hw_lib_;
-    boost::shared_ptr<controller_manager::ControllerManager> controller_manager_;
-
-    ros::ServiceServer reset_service_;
-    ros::Duration recovery_period_;
-
-  public:
-    bool resetHW(std_srvs::Trigger::Request & req, std_srvs::Trigger::Response & res)
-    {
-      must_restart_hw_ = true;
-      return true;
-    }
-  };
-
-  // MAIN
-  int main(int argc, char** argv)
-  {
-    ros::init(argc, argv, "robotnik_base_hw_node");
-
-    // TODO: remove debug level
-    if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
-    {
-      ros::console::notifyLoggerLevelsChanged();
-    }
-
-    // NOTE: We run the ROS loop in a separate thread as external calls such
-    // as service callbacks to load controllers can block the (main) control loop
-    ros::AsyncSpinner spinner(2);
-    spinner.start();
-
-    RobotnikBaseHWMain base;
-
-    base.rosSetup();
-    base.run();
-
-    // Wait until shutdown signal recieved
-    ros::waitForShutdown();
-
-    return 0;
   }
+
+private:
+  ros::NodeHandle nh_;
+  ros::NodeHandle pnh_;
+  int state;
+  double desired_freq_;
+  bool must_restart_hw_;
+  boost::shared_ptr<RobotnikBaseHW> robotnik_base_hw_lib_;
+  boost::shared_ptr<controller_manager::ControllerManager> controller_manager_;
+
+  ros::ServiceServer reset_service_;
+  ros::Duration recovery_period_;
+
+public:
+  bool resetHW(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
+  {
+    must_restart_hw_ = true;
+    return true;
+  }
+};
+
+// MAIN
+int main(int argc, char **argv)
+{
+  ros::init(argc, argv, "robotnik_base_hw_node");
+
+  // TODO: remove debug level
+  if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
+  {
+    ros::console::notifyLoggerLevelsChanged();
+  }
+
+  // NOTE: We run the ROS loop in a separate thread as external calls such
+  // as service callbacks to load controllers can block the (main) control loop
+  ros::AsyncSpinner spinner(2);
+  spinner.start();
+
+  RobotnikBaseHWMain base;
+
+  base.rosSetup();
+  base.run();
+
+  // Wait until shutdown signal recieved
+  ros::waitForShutdown();
+
+  return 0;
+}
