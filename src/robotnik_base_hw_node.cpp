@@ -5,10 +5,10 @@
 #include <vector>
 
 #include <ros/ros.h>
-#include <std_msgs/Float32.h>  // battery, gyro, and steering angle
-#include <std_msgs/Float64.h>  // battery, gyro, and steering angle
+#include <std_msgs/Float32.h> // battery, gyro, and steering angle
+#include <std_msgs/Float64.h> // battery, gyro, and steering angle
 #include <std_msgs/Int32.h>
-#include <std_msgs/Bool.h>  //
+#include <std_msgs/Bool.h> //
 #include <sensor_msgs/JointState.h>
 #include <std_srvs/Trigger.h>
 
@@ -55,7 +55,7 @@ public:
     if (auto_recovery_ == true and period == 0)
     {
       ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW: you set auto_recovery, but a recovery period of 0. This is non sense. I "
-                      "will disable auto recovery");
+                                              "will disable auto recovery");
       auto_recovery_ = false;
     }
 
@@ -118,17 +118,17 @@ public:
             if (auto_recovery_ == true)
             {
               ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
-                              << recovery_period_.toSec()
-                              << " seconds, but safety is enabled and auto recovery is enabled, so "
-                                 "let's wait until safety is disable to try to recover from this");
+                                                          << recovery_period_.toSec()
+                                                          << " seconds, but safety is enabled and auto recovery is enabled, so "
+                                                             "let's wait until safety is disable to try to recover from this");
             }
             else
             {
               ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
-                              << recovery_period_.toSec()
-                              << " seconds, but safety is enabled and auto recovery is not enabled, "
-                                 "maybe I cannot                          recover from this when safety "
-                                 "is disabled");
+                                                          << recovery_period_.toSec()
+                                                          << " seconds, but safety is enabled and auto recovery is not enabled, "
+                                                             "maybe I cannot                          recover from this when safety "
+                                                             "is disabled");
             }
           }
           else
@@ -136,14 +136,14 @@ public:
             if (auto_recovery_ == false)
             {
               ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
-                              << recovery_period_.toSec() << " seconds, safety is not enabled but auto "
-                              << " recovery is not enabled. Maybe I will keep in this state until the end of time");
+                                                          << recovery_period_.toSec() << " seconds, safety is not enabled but auto "
+                                                          << " recovery is not enabled. Maybe I will keep in this state until the end of time");
             }
             else
             {
               ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
-                              << recovery_period_.toSec() << " seconds, safety is not enabled and auto recovery "
-                                                             "is enabled. I'm trying to restart the system");
+                                                          << recovery_period_.toSec() << " seconds, safety is not enabled and auto recovery "
+                                                                                         "is enabled. I'm trying to restart the system");
               must_reset_hw_ = true;
             }
           }
@@ -159,35 +159,37 @@ public:
 
       switch (state)
       {
-        case HW_STATE_INIT:
-          if (robotnik_base_hw_lib_->IsSystemReady())
-          {
-            state = HW_STATE_HOMING;
-            bool force_home = false;
-            robotnik_base_hw_lib_->SendToHome(force_home);
-          }
-          break;
+      case HW_STATE_INIT:
+        if (robotnik_base_hw_lib_->IsSystemReady())
+        {
+          state = HW_STATE_HOMING;
+          bool force_home = false;
+          robotnik_base_hw_lib_->ResetIngeniaDrives();
+          robotnik_base_hw_lib_->SendToHome(force_home);
+        }
+        break;
 
-        case HW_STATE_HOMING:
-          if (robotnik_base_hw_lib_->IsHomed())
-          {
-            state = HW_STATE_READY;
-          }
-          break;
+      case HW_STATE_HOMING:
+        if (robotnik_base_hw_lib_->IsHomed())
+        {
+          state = HW_STATE_READY;
+        }
+        break;
 
-        case HW_STATE_READY:
-          robotnik_base_hw_lib_->write(elapsed_time);
-          break;
-        case HW_STATE_RESTART:
-          must_reset_hw_ = false;
-          robotnik_base_hw_lib_->Stop();
-          robotnik_base_hw_lib_->ShutDown();
-          robotnik_base_hw_lib_->destroyMotorDrives();
-          robotnik_base_hw_lib_->createMotorDrives();
-          robotnik_base_hw_lib_->Setup();
-          robotnik_base_hw_lib_->Start();
-          state = HW_STATE_INIT;
-          break;
+      case HW_STATE_READY:
+        robotnik_base_hw_lib_->write(elapsed_time);
+        break;
+      case HW_STATE_RESTART:
+        must_reset_hw_ = false;
+        robotnik_base_hw_lib_->Stop();
+        robotnik_base_hw_lib_->ShutDown();
+        robotnik_base_hw_lib_->ResetIngeniaDrives();
+        robotnik_base_hw_lib_->destroyMotorDrives();
+        robotnik_base_hw_lib_->createMotorDrives();
+        robotnik_base_hw_lib_->Setup();
+        robotnik_base_hw_lib_->Start();
+        state = HW_STATE_INIT;
+        break;
       }
     }
   }
@@ -209,7 +211,7 @@ private:
   ros::ServiceServer reset_service_;
 
 public:
-  bool resetHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
+  bool resetHW(std_srvs::Trigger::Request &req, std_srvs::Trigger::Response &res)
   {
     must_reset_hw_ = true;
     return true;
@@ -217,7 +219,7 @@ public:
 };
 
 // MAIN
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
   ros::init(argc, argv, "robotnik_base_hw_node");
 
