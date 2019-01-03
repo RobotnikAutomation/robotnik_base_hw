@@ -49,8 +49,7 @@ robotnik_base_hw:
 #
 #  joint_can_id: [1,2,3,4,5,6,7,8]
 #
-#  joint_type: [vel,vel,vel,vel,pos,pos,pos,pos] (or ingenia_abs_pos / ingenia_rel_pos)
-#  joint_ingenia_offset: [23.63, 17.2484784024, 21.0898454196, 16.60151781] (for abs ingenia drives)
+#  joint_type: [vel,vel,vel,vel,pos,pos,pos,pos]
 #
 #  joint_home_offset: [0,0,0,0,-441807,-437669,-435603,-433906]  
 
