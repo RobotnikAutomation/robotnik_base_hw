@@ -82,8 +82,6 @@ public:
     // Start the control loop
     controller_manager_.reset(new controller_manager::ControllerManager(&(*robotnik_base_hw_lib_)));
 
-    ros::Rate loop_rate(desired_freq_);
-    ros::Time last_time = ros::Time::now();
 
     // check that system is ready. previously this was done using the robotnik_base_hw_lib_->WaitToBeReady(), but it is
     // a
@@ -91,15 +89,17 @@ public:
     // so now we do it separately and call the controller_manager_.update
     robotnik_base_hw_lib_->InitSystem();
 
-    last_time = ros::Time::now();
+    ros::WallRate loop_rate(desired_freq_);
+    ros::SteadyTime last_time = ros::SteadyTime::now();
+
     robotnik_base_hw_lib_->setMotorsToRunningFrequency();
     double last_time_check_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
     while (ros::ok())
     {
       loop_rate.sleep();
 
-      ros::Time current_time = ros::Time::now();
-      ros::Duration elapsed_time = current_time - last_time;
+      ros::SteadyTime current_time = ros::SteadyTime::now();
+      ros::Duration elapsed_time((current_time - last_time).toSec());
       last_time = current_time;
 
       robotnik_base_hw_lib_->update();
