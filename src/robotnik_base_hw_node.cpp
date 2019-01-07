@@ -150,7 +150,7 @@ public:
         }
       }
 
-      controller_manager_->update(current_time, elapsed_time);
+      controller_manager_->update(ros::Time(current_time.toSec()), elapsed_time);
 
       if (must_reset_hw_)
       {
