@@ -1,6 +1,10 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package robotnik_base_hw_lib
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package robotnik_base_hw
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.9.12
+------
+* updated to use robotnik_base_hw_lib 0.9.12
 
 0.9.11
 ------
