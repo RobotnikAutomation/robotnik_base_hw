@@ -16,7 +16,7 @@
     <arg name="battery_voltage_offset" default="" />
 
     <!-- Battery configuration -->
-    <arg name="battery_voltage" default="$(optenv ROBOT_BATTERY_VOLTAGE 24)"/>
+    <arg name="battery_voltage" default="$(optenv ROBOT_BASE_HW_BATTERY_VOLTAGE 24)"/>
 
  
     <rosparam file="$(find robotnik_base_hw)/config/robotnik_base_hw_limits.yaml" command="load" />    
