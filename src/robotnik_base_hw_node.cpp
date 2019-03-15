@@ -67,6 +67,7 @@ public:
     // Create the hardware interface specific to your robot
     robotnik_base_hw_lib_.reset(new RobotnikBaseHW(nh_));
     robotnik_base_hw_lib_->initHardwareInterface();
+    robotnik_base_hw_lib_->ResetIngeniaDrives();
     while (ros::ok())
     {
       if (robotnik_base_hw_lib_->Setup() == Component::ReturnValue::OK)
@@ -164,7 +165,7 @@ public:
         {
           state = HW_STATE_HOMING;
           bool force_home = false;
-          robotnik_base_hw_lib_->ResetIngeniaDrives();
+          //robotnik_base_hw_lib_->ResetIngeniaDrives();
           robotnik_base_hw_lib_->SendToHome(force_home);
         }
         break;
