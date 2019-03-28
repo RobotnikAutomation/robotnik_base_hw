@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<launch>
+
+   <arg name="debug" default="false" />
+   <param name="robot_description" command="cat $(find robotnik_base_hw)/test/model.urdf" />
+   <node name="robot_state_publisher" pkg="robot_state_publisher" type="state_publisher"/>
+
+   <arg name="base_control" default="$(find robotnik_base_hw)/test/control.yaml" />
+   <arg name="base_hw_limits" default="$(find robotnik_base_hw)/config/robotnik_base_hw_limits.yaml" />
+   <arg name="base_hw_config" default="$(find robotnik_base_hw)/config/robotnik_base_hw.yaml" />
+
+   <include file="$(find robotnik_base_hw)/launch/robotnik_base_hw.launch" >
+     <arg name="debug" value="$(arg debug)" />
+     <arg name="base_hw_limits" value="$(arg base_hw_limits)" />
+     <arg name="base_hw_config" value="$(arg base_hw_config)" />
+   </include>
+
+   <rosparam file="$(arg base_control)" command="load"/>
+   
+   <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false"
+        output="screen" args="
+          joint_frw_velocity_controller
+          joint_flw_velocity_controller
+          joint_brw_velocity_controller
+          joint_blw_velocity_controller
+          joint_read_state_controller
+          ">
+   </node>
+
+</launch>
