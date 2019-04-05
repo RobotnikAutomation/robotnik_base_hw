@@ -6,10 +6,14 @@
     <arg unless="$(arg debug)" name="launch_prefix" value="" />
     <arg     if="$(arg debug)" name="launch_prefix" value="terminator -m -x gdb --args" /> <!-- local debug -->
     <!--arg     if="$(arg debug)" name="launch_prefix" value="terminator -m -x valgrind" /--> <!-- local debug -->
+    <arg name="battery_estimation_enabled" default="true"/>
 
- 
-    <rosparam file="$(find robotnik_base_hw)/config/robotnik_base_hw_limits.yaml" command="load" />    
-    <rosparam file="$(find robotnik_base_hw)/config/robotnik_base_hw.yaml" command="load" />    
-    <node name="robotnik_base_hw" pkg="robotnik_base_hw" type="robotnik_base_hw_node" output="screen" launch-prefix="$(arg launch_prefix)" />
-	
+
+    <rosparam file="$(find robotnik_base_hw)/config/robotnik_base_hw_limits.yaml" command="load" />
+    <rosparam file="$(find robotnik_base_hw)/config/robotnik_base_hw.yaml" command="load" />
+
+    <node name="robotnik_base_hw" pkg="robotnik_base_hw" type="robotnik_base_hw_node" output="screen" launch-prefix="$(arg launch_prefix)">
+        <param name="battery_estimation_enabled" value="$(arg battery_estimation_enabled)" />
+    </node>
+
 </launch>
