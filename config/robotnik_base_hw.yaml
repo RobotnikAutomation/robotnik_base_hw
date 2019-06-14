@@ -15,6 +15,7 @@ robotnik_base_hw:
   # Be carefull if motors don't have enconders and you put motors_enconder: true speed will increase x 4000
   motors_encoder: true
   motors_encoder_factor: 4000
+  max_rated_peak_current_drive: 40.0
 
   joint_name: [rb1_base_left_wheel_joint,rb1_base_right_wheel_joint]
   joint_can_id: [1,2]
