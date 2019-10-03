@@ -110,7 +110,16 @@ public:
 
       robotnik_base_hw_lib_->read(elapsed_time);
 
-      double time_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
+      double time_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState(); 
+      
+      if(time_in_current_state < last_time_check_in_current_state) // The state has changed, then reset the last time
+      {	
+	  last_time_check_in_current_state = time_in_current_state;
+      }
+      
+      //ROS_WARN_THROTTLE(1, "Time in %s = %.3lf secs. Last time checked = %.3lf (recovery = %.3lf)",
+      // robotnik_base_hw_lib_->GetComponentStateString(), time_in_current_state, last_time_check_in_current_state, recovery_period_.toSec());
+      
       if ((time_in_current_state - last_time_check_in_current_state) > recovery_period_.toSec())
       {
         last_time_check_in_current_state = time_in_current_state;
