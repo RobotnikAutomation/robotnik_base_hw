@@ -1,87 +1,23 @@
 robotnik_base_hw:
-  port: /dev/pcan_base
+  port: /dev/pcan32
 
-  desired_freq: 150.0
-  
-  # if true, tries to recover from fatal errors in hw, mostly after pressing e-stop. must have a recovery_period set
-  auto_recovery: true
-  # period in sec between recovery attempts
-  recovery_period: 10
-  
   # Summit rubber wheels: 0.22, Summit omni wheels: 0.25, RB1: 0.1524 
   diameter_wheel: 0.1524
   # 24V motors: 12.52, 48V motors: 9.56, RB1 Accelerated: 7.5 (9.56?)
   gearbox_ratio: 12.52
   # Be carefull if motors don't have enconders and you put motors_enconder: true speed will increase x 4000
-  motors_encoder: true
+  motors_encoder: false
   motors_encoder_factor: 4000
 
-  joint_name: [rb1_base_left_wheel_joint,rb1_base_right_wheel_joint]
-  joint_can_id: [1,2]
-  joint_type: [vel,vel]
-  joint_home_offset: [0,0]
-  joint_spin: [1,-1]
-
-  auto_restart: false
-  #home_method: 1
-  #check_limit_position_reached: false
-
-  #joint_home_offset: [0, 0, 0, 0, 0]
-
-  #joint_home_required: [true, false, false, false, false]
-
-  #joint_home_at_startup: [false, false, false, false, false]
-
-  #low_position_limit: [-5000000, -1.79769e+300, -1.79769e+300, -1.79769e+300, -1.79769e+300]
-
-  #high_position_limit: [5000000, 1.79769e+300, 1.79769e+300, 1.79769e+300, 1.79769e+300]
-
-
-
-#  joint_name:  [front_left_wheel_joint,
-#            back_left_wheel_joint,
-#            front_right_wheel_joint,
-#            back_right_wheel_joint,
-#            front_left_motor_wheel_joint,
-#            back_left_motor_wheel_joint,
-#            front_right_motor_wheel_joint,
-#            back_right_motor_wheel_joint]
-#
-#  joint_can_id: [1,2,3,4,5,6,7,8]
-#
-#  joint_type: [vel,vel,vel,vel,pos,pos,pos,pos]
-#
-#  joint_home_offset: [0,0,0,0,-441807,-437669,-435603,-433906]  
-
-
-# Control loop params - don't change unless you know what you are doing
- 
-# 20A driver parameter
-  # current_kp: 0.25390625
-  # current_ki: 0.09375
-  # peak_current_limit_amps: 10.0
-  # peak_current_limit_secs: 4.0
-  # continuous_current_limit: 6.0
-  # current_foldback_secs: 3.0
-  # velocity_kp: 0.008
-  # velocity_ki: 0.08
-  # velocity_kd: 0.000000022
-
-# 40A driver parameter
-  # current_kp: 0.25390625
-  # current_ki: 0.09375
-  # peak_current_limit_amps: 20.0
-  # peak_current_limit_secs: 4.0
-  # continuous_current_limit: 12.0
-  # current_foldback_secs: 3.0
-  # velocity_kp: 0.0014
-  # velocity_ki: 0.25
-  # velocity_kd: 0.000000022
+  joint_name: [rb2_left_wheel_joint] #,rb1_base_right_wheel_joint]
+  joint_can_id: [1] #,2]
+  joint_type: [eff] #,vel]
+  joint_home_offset: [0] #,0]
+  joint_spin: [1] #,-1]
 
 generic_hw_control_loop:
   loop_hz: 300 
   cycle_time_error_threshold: 0.01
-
 
 # Settings for ros_control hardware interface
 hardware_interface:
@@ -91,7 +27,6 @@ hardware_interface:
      #- joint_back_right_wheel
      #- joint_back_left_wheel
 
-     - rb1_base_left_wheel_joint
-     - rb1_base_right_wheel_joint
+     - rb2_left_wheel_joint
    
      

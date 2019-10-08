@@ -1,0 +1,27 @@
+<launch>
+  <arg name="prefix" value=""/>
+  <arg name="input" value="/joint_states" />
+  <arg name="output_topic" value="/state" />
+  <arg name="output_type" value="std_msgs/Float64" />
+  <arg name="expression" value="m.velocity[0]" />
+
+  <node name="traction_pid" pkg="pid" type="controller" output="screen" launch-prefix="" >
+    <param name="Kp" value="2.0" />
+    <param name="Ki" value="2.0" />
+    <param name="Kd" value="0.002" />
+    <param name="upper_limit" value="3000" />
+    <param name="lower_limit" value="-3000" />
+    <param name="windup_limit" value="200" />
+    <param name="cutoff_frequency" value="20" />
+    <param name="max_loop_frequency" value="105.0" />
+    <param name="min_loop_frequency" value="95.0" />
+    <param name="setpoint_timeout" value="1" />
+    <remap from="setpoint" to="/setpoint" />
+    <remap from="control_effort" to="$(arg prefix)/robotnik_base_control/command" />
+  </node>
+
+
+  <node name="transform_node" pkg="topic_tools" type="transform" output="screen"
+        args="$(arg input) $(arg output_topic) $(arg output_type) $(arg expression)">
+  </node>
+</launch>

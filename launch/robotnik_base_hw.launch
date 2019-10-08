@@ -1,13 +1,14 @@
 <?xml version="1.0"?>
 <launch>
-
+     <env name="ROSCONSOLE_CONFIG_FILE"
+       value="$(find robotnik_base_hw)/launch/sevcon_rosconsole.conf"/>
     <!-- GDB functionality -->
     <arg name="debug" default="false" />
     <arg unless="$(arg debug)" name="launch_prefix" value="" />
     <arg     if="$(arg debug)" name="launch_prefix" value="terminator -m -x gdb --args" /> <!-- local debug -->
     <!--arg     if="$(arg debug)" name="launch_prefix" value="terminator -m -x valgrind" /--> <!-- local debug -->
-    
-    <!-- available modes for the charger management: 
+
+    <!-- available modes for the charger management:
     # - disabled (there's no hw to do it)
     # - automatic_hw (unattended relay detection & activation with no inputs/outputs feedback. Done by the hw)
     # - automatic_sw (unattended relay detection & activation with inputs/outputs feedback. Done by the sw)
@@ -19,15 +20,15 @@
     <arg name="battery_voltage" default="$(optenv ROBOT_BASE_HW_BATTERY_VOLTAGE 24)"/>
 
      <arg name="base_hw_limits" default="$(find robotnik_base_hw)/config/robotnik_base_hw_limits.yaml"/>
-     <arg name="base_hw_config" default="$(find robotnik_base_hw)/config/robotnik_base_hw.yaml"/>    
- 
-    <rosparam file="$(arg base_hw_limits)" command="load" />    
-    <rosparam file="$(arg base_hw_config)" command="load" />    
+     <arg name="base_hw_config" default="$(find robotnik_base_hw)/config/robotnik_base_hw.yaml"/>
+
+    <rosparam file="$(arg base_hw_limits)" command="load" />
+    <rosparam file="$(arg base_hw_config)" command="load" />
 
     <node name="robotnik_base_hw" pkg="robotnik_base_hw" type="robotnik_base_hw_node" output="screen" launch-prefix="$(arg launch_prefix)" />
-		
+
     <rosparam file="$(find robotnik_base_hw)/config/robotnik_battery_estimation_$(arg battery_voltage)V.yaml" command="load" />
     <param name="battery_docking_charger/operation_mode" value="$(arg docker_mode)"/>
     <param name="k_battery_voltage_offset" value="$(arg battery_voltage_offset)"/>
-	
+
 </launch>
