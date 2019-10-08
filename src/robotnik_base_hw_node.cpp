@@ -23,6 +23,17 @@
 
 #include <robotnik_base_hw_lib/robotnik_base_hw.h>
 
+#include <signal.h>
+
+sighandler_t old_handler;
+bool g_ok = true;
+
+void signal_handler(int sgn)
+{
+  ROS_INFO("SIGNAL!");
+  g_ok = false;
+}
+
 enum
 {
   HW_STATE_INIT,
@@ -54,8 +65,9 @@ public:
 
     if (auto_recovery_ == true and period == 0)
     {
-      ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW: you set auto_recovery, but a recovery period of 0. This is non sense. I "
-                      "will disable auto recovery");
+      ROS_WARN_STREAM_NAMED("RobotnikBaseHW",
+                            "RobotnikBaseHW: you set auto_recovery, but a recovery period of 0. This is non sense. I "
+                            "will disable auto recovery");
       auto_recovery_ = false;
     }
 
@@ -67,7 +79,7 @@ public:
     // Create the hardware interface specific to your robot
     robotnik_base_hw_lib_.reset(new RobotnikBaseHW(nh_));
     robotnik_base_hw_lib_->initHardwareInterface();
-    while (ros::ok())
+    while (g_ok)  // ros::ok())
     {
       if (robotnik_base_hw_lib_->Setup() == Component::ReturnValue::OK)
       {
@@ -87,14 +99,14 @@ public:
     // blocking function
     // so now we do it separately and call the controller_manager_.update
     robotnik_base_hw_lib_->InitSystem();
-    
+
     ros::WallRate loop_rate(desired_freq_);
     ros::Time last_time = ros::Time::now();
     ros::SteadyTime last_steady_time = ros::SteadyTime::now();
-    
+
     robotnik_base_hw_lib_->setMotorsToRunningFrequency();
     double last_time_check_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
-    while (ros::ok())
+    while (g_ok)  // ros::ok())
     {
       loop_rate.sleep();
 
@@ -121,18 +133,20 @@ public:
           {
             if (auto_recovery_ == true)
             {
-              ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
-                              << recovery_period_.toSec()
-                              << " seconds, but safety is enabled and auto recovery is enabled, so "
-                                 "let's wait until safety is disable to try to recover from this");
+              ROS_WARN_STREAM_NAMED("RobotnikBaseHW",
+                                    "RobotnikBaseHW is in emergency for more than "
+                                        << recovery_period_.toSec()
+                                        << " seconds, but safety is enabled and auto recovery is enabled, so "
+                                           "let's wait until safety is disable to try to recover from this");
             }
             else
             {
-              ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
-                              << recovery_period_.toSec()
-                              << " seconds, but safety is enabled and auto recovery is not enabled, "
-                                 "maybe I cannot                          recover from this when safety "
-                                 "is disabled");
+              ROS_WARN_STREAM_NAMED("RobotnikBaseHW",
+                                    "RobotnikBaseHW is in emergency for more than "
+                                        << recovery_period_.toSec()
+                                        << " seconds, but safety is enabled and auto recovery is not enabled, "
+                                           "maybe I cannot                          recover from this when safety "
+                                           "is disabled");
             }
           }
           else
@@ -140,13 +154,16 @@ public:
             if (auto_recovery_ == false)
             {
               ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
-                              << recovery_period_.toSec() << " seconds, safety is not enabled but auto "
-                              << " recovery is not enabled. Maybe I will keep in this state until the end of time");
+                                                          << recovery_period_.toSec()
+                                                          << " seconds, safety is not enabled but auto "
+                                                          << " recovery is not enabled. Maybe I will keep in this "
+                                                             "state until the end of time");
             }
             else
             {
               ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
-                              << recovery_period_.toSec() << " seconds, safety is not enabled and auto recovery "
+                                                          << recovery_period_.toSec()
+                                                          << " seconds, safety is not enabled and auto recovery "
                                                              "is enabled. I'm trying to restart the system");
               must_reset_hw_ = true;
             }
@@ -196,6 +213,14 @@ public:
     }
   }
 
+  void stop()
+  {
+    ROS_INFO("Stop");
+    robotnik_base_hw_lib_->Stop();
+    robotnik_base_hw_lib_->ShutDown();
+    robotnik_base_hw_lib_->destroyMotorDrives();
+  }
+
 private:
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
@@ -223,13 +248,15 @@ public:
 // MAIN
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "robotnik_base_hw_node");
+  ros::init(argc, argv, "robotnik_base_hw_node", ros::init_options::NoSigintHandler);
 
   // TODO: remove debug level
-  if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
-  {
-    ros::console::notifyLoggerLevelsChanged();
-  }
+  // if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
+  //{
+  //  ros::console::notifyLoggerLevelsChanged();
+  //}
+
+  old_handler = signal(SIGINT, signal_handler);
 
   // NOTE: We run the ROS loop in a separate thread as external calls such
   // as service callbacks to load controllers can block the (main) control loop
@@ -241,8 +268,17 @@ int main(int argc, char** argv)
   base.rosSetup();
   base.run();
 
+  ros::Rate r(2);
+  while (g_ok)
+  {
+    ROS_INFO("Sleep");
+    r.sleep();
+  }
+
+  // base.stop();
+
   // Wait until shutdown signal recieved
-  ros::waitForShutdown();
+  // ros::waitForShutdown();
 
   return 0;
 }
