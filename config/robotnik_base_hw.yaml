@@ -9,11 +9,11 @@ robotnik_base_hw:
   motors_encoder: false
   motors_encoder_factor: 4000
 
-  joint_name: [rb2_left_wheel_joint] #,rb1_base_right_wheel_joint]
-  joint_can_id: [1] #,2]
-  joint_type: [eff] #,vel]
-  joint_home_offset: [0] #,0]
-  joint_spin: [1] #,-1]
+  joint_name: [rear_axle_joint]
+  joint_can_id: [1]
+  joint_type: [eff]
+  joint_home_offset: [0]
+  joint_spin: [1]
 
 generic_hw_control_loop:
   loop_hz: 300 
@@ -22,11 +22,6 @@ generic_hw_control_loop:
 # Settings for ros_control hardware interface
 hardware_interface:
   joints:
-     #- joint_front_right_wheel
-     #- joint_front_left_wheel
-     #- joint_back_right_wheel
-     #- joint_back_left_wheel
-
-     - rb2_left_wheel_joint
+     - rear_axle_joint
    
      
