@@ -49,11 +49,8 @@ Robot is able to auto recover it's hardware in case of malfunctioning. This is c
 - **status**: Publishes an overview of the status of the motors.
   - type: robotnik_msgs/RobotnikMotorsStatus
 
-- **battery/voltage**: Publishes the voltage getted by MotorDrive (with an applied offset).
+- **voltage**: Publishes the voltage getted by MotorDrive (with an applied offset).
   - type: std_msgs/Float32
-
-- **battery/alarm**: True when the voltage is too low.
-  - type: std_msgs/Bool
 
 - **emergency_stop**: True when the emergency button has been presed (or an error caused the stop of the robot).
   - type: std_msgs/Bool
