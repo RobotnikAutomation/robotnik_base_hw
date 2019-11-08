@@ -23,6 +23,7 @@ robotnik_base_hw:
   joint_home_offset: [0,0]
   joint_spin: [1,-1]
 
+  # Value to multiply to IO raw data received
   k_multipliers:
     - multiplier: 6.978947368
     
