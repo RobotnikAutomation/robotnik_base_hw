@@ -23,6 +23,15 @@ robotnik_base_hw:
   joint_home_offset: [0,0]
   joint_spin: [1,-1]
 
+  k_multipliers:
+    - multiplier: 6.978947368
+    
+    - multiplier: 12.5
+    
+    - multiplier: 1.0
+    
+    - multiplier: 1.0
+
   #home_method: 1
   #check_limit_position_reached: false
 
