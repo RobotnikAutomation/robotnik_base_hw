@@ -24,14 +24,14 @@ robotnik_base_hw:
   joint_spin: [1,-1]
 
   # Value to multiply to IO raw data received
-  k_multipliers:
-    - multiplier: 6.978947368
+  k_analog_multipliers:
+    - ai_1: 6.978947368
     
-    - multiplier: 12.5
+    - ai_2: -12.5
     
-    - multiplier: 1.0
+    - ai_3: 1.0
     
-    - multiplier: 1.0
+    - ai_4: 1.0
 
   #home_method: 1
   #check_limit_position_reached: false
