@@ -50,6 +50,8 @@ public:
     state = HW_STATE_INIT;
     desired_freq_ = ROBOTNIK_DEFAULT_HZ;
     must_reset_hw_ = false;
+    must_start_hw_ = false;
+    started_ = false;
   }
 
   void rosSetup()
@@ -72,6 +74,7 @@ public:
     }
 
     reset_service_ = pnh_.advertiseService("reset_hw", &RobotnikBaseHWMain::resetHW, this);
+    start_service_ = pnh_.advertiseService("start_hw", &RobotnikBaseHWMain::startHW, this);
   }
 
   void run()
@@ -81,13 +84,18 @@ public:
     robotnik_base_hw_lib_->initHardwareInterface();
     while (g_ok)  // ros::ok())
     {
-      if (robotnik_base_hw_lib_->Setup() == Component::ReturnValue::OK)
+      ROS_INFO_STREAM("Waiting to start: " << must_start_hw_);
+      if (must_start_hw_ == true)
       {
-        if (robotnik_base_hw_lib_->Start() == Component::ReturnValue::OK)
+        if (robotnik_base_hw_lib_->Setup() == Component::ReturnValue::OK)
         {
-          break;
+          if (robotnik_base_hw_lib_->Start() == Component::ReturnValue::OK)
+          {
+            break;
+          }
         }
       }
+      ros::spinOnce();
       ros::Duration(5.0).sleep();
     }
 
@@ -106,6 +114,9 @@ public:
 
     robotnik_base_hw_lib_->setMotorsToRunningFrequency();
     double last_time_check_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
+    started_ = true;
+    must_start_hw_ = false;
+    bool reset_controllers = false;
     while (g_ok)  // ros::ok())
     {
       loop_rate.sleep();
@@ -171,7 +182,11 @@ public:
         }
       }
 
-      controller_manager_->update(current_time, elapsed_time);
+      if (started_) // started_ should not be exist. should be a method of base_hw_lib. this is a quick and dirty hack
+      {
+        controller_manager_->update(current_time, elapsed_time, reset_controllers);
+        reset_controllers = false;
+      }
 
       if (must_reset_hw_)
       {
@@ -200,14 +215,22 @@ public:
           robotnik_base_hw_lib_->write(elapsed_time);
           break;
         case HW_STATE_RESTART:
-          must_reset_hw_ = false;
-          robotnik_base_hw_lib_->Stop();
-          robotnik_base_hw_lib_->ShutDown();
-          robotnik_base_hw_lib_->destroyMotorDrives();
-          robotnik_base_hw_lib_->createMotorDrives();
-          robotnik_base_hw_lib_->Setup();
-          robotnik_base_hw_lib_->Start();
-          state = HW_STATE_INIT;
+          if (must_reset_hw_) {
+            robotnik_base_hw_lib_->Stop();
+            robotnik_base_hw_lib_->ShutDown();
+            robotnik_base_hw_lib_->destroyMotorDrives();
+            must_reset_hw_ = false;
+            started_ = false;
+          }
+          if (must_start_hw_) {
+            robotnik_base_hw_lib_->createMotorDrives();
+            robotnik_base_hw_lib_->Setup();
+            robotnik_base_hw_lib_->Start();
+            state = HW_STATE_INIT;
+            must_start_hw_ = false;
+            started_ = true;
+            reset_controllers = true;
+          }
           break;
       }
     }
@@ -228,6 +251,8 @@ private:
   double desired_freq_;
   // must reset changes HW_STATE machine to the reset state. Can be set due to the auto recovery or the reset service
   bool must_reset_hw_;
+  bool must_start_hw_;
+  bool started_;
 
   bool auto_recovery_;
   ros::Duration recovery_period_;
@@ -236,11 +261,18 @@ private:
   boost::shared_ptr<controller_manager::ControllerManager> controller_manager_;
 
   ros::ServiceServer reset_service_;
+  ros::ServiceServer start_service_;
 
 public:
   bool resetHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
   {
     must_reset_hw_ = true;
+    return true;
+  }
+  
+  bool startHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
+  {
+    must_start_hw_ = true;
     return true;
   }
 };
@@ -249,12 +281,6 @@ public:
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "robotnik_base_hw_node", ros::init_options::NoSigintHandler);
-
-  // TODO: remove debug level
-  // if (ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug))
-  //{
-  //  ros::console::notifyLoggerLevelsChanged();
-  //}
 
   old_handler = signal(SIGINT, signal_handler);
 
