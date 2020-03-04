@@ -52,6 +52,7 @@ public:
     must_reset_hw_ = false;
     must_start_hw_ = false;
     started_ = false;
+    manual_mode_ = true;
   }
 
   void rosSetup()
@@ -75,6 +76,7 @@ public:
 
     reset_service_ = pnh_.advertiseService("reset_hw", &RobotnikBaseHWMain::resetHW, this);
     start_service_ = pnh_.advertiseService("start_hw", &RobotnikBaseHWMain::startHW, this);
+    manual_service_ = pnh_.advertiseService("manual_hw", &RobotnikBaseHWMain::manualMode, this);
   }
 
   void run()
@@ -184,7 +186,8 @@ public:
 
       if (started_) // started_ should not be exist. should be a method of base_hw_lib. this is a quick and dirty hack
       {
-        controller_manager_->update(current_time, elapsed_time, reset_controllers);
+        bool base_hw_not_in_ready = (robotnik_base_hw_lib_->GetComponentState() != Component::READY_STATE);
+        controller_manager_->update(current_time, elapsed_time, (reset_controllers or manual_mode_ or base_hw_not_in_ready));
         reset_controllers = false;
       }
 
@@ -253,6 +256,7 @@ private:
   bool must_reset_hw_;
   bool must_start_hw_;
   bool started_;
+  bool manual_mode_;
 
   bool auto_recovery_;
   ros::Duration recovery_period_;
@@ -262,6 +266,7 @@ private:
 
   ros::ServiceServer reset_service_;
   ros::ServiceServer start_service_;
+  ros::ServiceServer manual_service_;
 
 public:
   bool resetHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
@@ -273,6 +278,16 @@ public:
   bool startHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
   {
     must_start_hw_ = true;
+    return true;
+  }
+
+  bool manualMode(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response)
+  {
+    ROS_INFO_STREAM("I'm in " << (manual_mode_ ? "manual": "auto") << " and will switch to "
+                            << (request.data ? "manual" : "auto"));
+    manual_mode_ = request.data;
+
+    robotnik_base_hw_lib_->setModeSrvCallback(request, response);
     return true;
   }
 };
