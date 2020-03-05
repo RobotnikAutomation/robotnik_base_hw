@@ -98,7 +98,7 @@ public:
         }
       }
       ros::spinOnce();
-      ros::Duration(5.0).sleep();
+      ros::Duration(1.0).sleep();
     }
 
     // Start the control loop
