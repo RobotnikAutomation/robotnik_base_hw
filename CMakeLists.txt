@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   robotnik_msgs
   robotnik_base_hw_lib
   roscpp
+  joint_limits_interface
 )
 
 ## System dependencies are found with CMake's conventions
