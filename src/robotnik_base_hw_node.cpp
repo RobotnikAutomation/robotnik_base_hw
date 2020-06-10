@@ -184,7 +184,7 @@ public:
         must_reset_hw_ = false;
         robotnik_base_hw_lib_->Stop();
         robotnik_base_hw_lib_->ShutDown();
-        robotnik_base_hw_lib_->ResetIngeniaDrives();
+        //robotnik_base_hw_lib_->ResetIngeniaDrives();
         robotnik_base_hw_lib_->destroyMotorDrives();
         robotnik_base_hw_lib_->createMotorDrives();
         robotnik_base_hw_lib_->Setup();
