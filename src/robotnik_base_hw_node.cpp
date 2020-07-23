@@ -272,12 +272,16 @@ public:
   bool resetHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
   {
     must_reset_hw_ = true;
+    res.success = true;
+    res.message = "BaseHW reset";
     return true;
   }
   
   bool startHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
   {
     must_start_hw_ = true;
+    res.success = true;
+    res.message = "BaseHW started";
     return true;
   }
 
@@ -288,6 +292,8 @@ public:
     manual_mode_ = request.data;
 
     robotnik_base_hw_lib_->setModeSrvCallback(request, response);
+    response.success = true;
+    response.message = "BaseHW mode set";
     return true;
   }
 };
