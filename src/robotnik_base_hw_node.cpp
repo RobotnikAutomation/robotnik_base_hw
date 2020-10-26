@@ -52,7 +52,7 @@ public:
     must_reset_hw_ = false;
     must_start_hw_ = false;
     started_ = false;
-    manual_mode_ = true;
+    auto_mode_ = true;
   }
 
   void rosSetup()
@@ -76,7 +76,7 @@ public:
 
     reset_service_ = pnh_.advertiseService("reset_hw", &RobotnikBaseHWMain::resetHW, this);
     start_service_ = pnh_.advertiseService("start_hw", &RobotnikBaseHWMain::startHW, this);
-    manual_service_ = pnh_.advertiseService("manual_hw", &RobotnikBaseHWMain::manualMode, this);
+    auto_service_ = pnh_.advertiseService("auto_hw", &RobotnikBaseHWMain::autoMode, this);
   }
 
   void run()
@@ -121,6 +121,7 @@ public:
     bool reset_controllers = false;
     while (g_ok)  // ros::ok())
     {
+      ROS_INFO_STREAM_THROTTLE(5, "I'm in " << (auto_mode_ ? "auto" : "manual"));
       loop_rate.sleep();
 
       ros::Time current_time = ros::Time::now();
@@ -187,7 +188,7 @@ public:
       if (started_) // started_ should not be exist. should be a method of base_hw_lib. this is a quick and dirty hack
       {
         bool base_hw_not_in_ready = (robotnik_base_hw_lib_->GetComponentState() != Component::READY_STATE);
-        controller_manager_->update(current_time, elapsed_time, (reset_controllers or manual_mode_ or base_hw_not_in_ready));
+        controller_manager_->update(current_time, elapsed_time, (reset_controllers or not auto_mode_ or base_hw_not_in_ready));
         reset_controllers = false;
       }
 
@@ -256,7 +257,7 @@ private:
   bool must_reset_hw_;
   bool must_start_hw_;
   bool started_;
-  bool manual_mode_;
+  bool auto_mode_;
 
   bool auto_recovery_;
   ros::Duration recovery_period_;
@@ -266,7 +267,7 @@ private:
 
   ros::ServiceServer reset_service_;
   ros::ServiceServer start_service_;
-  ros::ServiceServer manual_service_;
+  ros::ServiceServer auto_service_;
 
 public:
   bool resetHW(std_srvs::Trigger::Request& req, std_srvs::Trigger::Response& res)
@@ -285,11 +286,11 @@ public:
     return true;
   }
 
-  bool manualMode(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response)
+  bool autoMode(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response)
   {
-    ROS_INFO_STREAM("I'm in " << (manual_mode_ ? "manual": "auto") << " and will switch to "
-                            << (request.data ? "manual" : "auto"));
-    manual_mode_ = request.data;
+    ROS_INFO_STREAM("I'm in " << (auto_mode_ ? "auto": "manual") << " and will switch to "
+                            << (request.data ? "auto" : "manual"));
+    auto_mode_ = request.data;
 
     robotnik_base_hw_lib_->setModeSrvCallback(request, response);
     response.success = true;
