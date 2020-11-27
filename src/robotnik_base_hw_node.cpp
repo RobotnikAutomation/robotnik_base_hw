@@ -121,7 +121,7 @@ public:
     bool reset_controllers = false;
     while (g_ok)  // ros::ok())
     {
-      ROS_INFO_STREAM_THROTTLE(5, "I'm in " << (auto_mode_ ? "auto" : "manual"));
+      ROS_INFO_STREAM_THROTTLE(5, "RobotnikBaseHW: I'm in " << (auto_mode_ ? "auto" : "manual"));
       loop_rate.sleep();
 
       ros::Time current_time = ros::Time::now();
@@ -288,7 +288,7 @@ public:
 
   bool autoMode(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response)
   {
-    ROS_INFO_STREAM("I'm in " << (auto_mode_ ? "auto": "manual") << " and will switch to "
+    ROS_INFO_STREAM_THROTTLE(5, "I'm in " << (auto_mode_ ? "auto": "manual") << " and will switch to "
                             << (request.data ? "auto" : "manual"));
     auto_mode_ = request.data;
 
