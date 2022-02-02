@@ -54,8 +54,9 @@ public:
 
     if (auto_recovery_ == true and period == 0)
     {
-      ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW: you set auto_recovery, but a recovery period of 0. This is non sense. I "
-                      "will disable auto recovery");
+      ROS_WARN_STREAM_NAMED("RobotnikBaseHW",
+                            "RobotnikBaseHW: you set auto_recovery, but a recovery period of 0. This is non sense. I "
+                            "will disable auto recovery");
       auto_recovery_ = false;
     }
 
@@ -87,11 +88,11 @@ public:
     // blocking function
     // so now we do it separately and call the controller_manager_.update
     robotnik_base_hw_lib_->InitSystem();
-    
+
     ros::WallRate loop_rate(desired_freq_);
     ros::Time last_time = ros::Time::now();
     ros::SteadyTime last_steady_time = ros::SteadyTime::now();
-    
+
     robotnik_base_hw_lib_->setMotorsToRunningFrequency();
     double last_time_check_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
     while (ros::ok())
@@ -110,16 +111,17 @@ public:
 
       robotnik_base_hw_lib_->read(elapsed_time);
 
-      double time_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState(); 
-      
-      if(time_in_current_state < last_time_check_in_current_state) // The state has changed, then reset the last time
-      {	
-	  last_time_check_in_current_state = time_in_current_state;
+      double time_in_current_state = robotnik_base_hw_lib_->GetTimeInCurrentState();
+
+      if (time_in_current_state < last_time_check_in_current_state)  // The state has changed, then reset the last time
+      {
+        last_time_check_in_current_state = time_in_current_state;
       }
-      
-      //ROS_WARN_THROTTLE(1, "Time in %s = %.3lf secs. Last time checked = %.3lf (recovery = %.3lf)",
-      // robotnik_base_hw_lib_->GetComponentStateString(), time_in_current_state, last_time_check_in_current_state, recovery_period_.toSec());
-      
+
+      // ROS_WARN_THROTTLE(1, "Time in %s = %.3lf secs. Last time checked = %.3lf (recovery = %.3lf)",
+      // robotnik_base_hw_lib_->GetComponentStateString(), time_in_current_state, last_time_check_in_current_state,
+      // recovery_period_.toSec());
+
       if ((time_in_current_state - last_time_check_in_current_state) > recovery_period_.toSec())
       {
         last_time_check_in_current_state = time_in_current_state;
@@ -131,17 +133,21 @@ public:
             if (auto_recovery_ == true)
             {
               ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
-                              << recovery_period_.toSec()
-                              << " seconds, but safety is enabled and auto recovery is enabled, so "
-                                 "let's wait until safety is disable to try to recover from this");
+                                                          << recovery_period_.toSec()
+                                                          << " seconds, but safety is enabled and auto recovery is "
+                                                             "enabled, so "
+                                                             "let's wait until safety is disable to try to recover "
+                                                             "from this");
             }
             else
             {
               ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
-                              << recovery_period_.toSec()
-                              << " seconds, but safety is enabled and auto recovery is not enabled, "
-                                 "maybe I cannot                          recover from this when safety "
-                                 "is disabled");
+                                                          << recovery_period_.toSec()
+                                                          << " seconds, but safety is enabled and auto recovery is not "
+                                                             "enabled, "
+                                                             "maybe I cannot                          recover from "
+                                                             "this when safety "
+                                                             "is disabled");
             }
           }
           else
@@ -149,13 +155,16 @@ public:
             if (auto_recovery_ == false)
             {
               ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
-                              << recovery_period_.toSec() << " seconds, safety is not enabled but auto "
-                              << " recovery is not enabled. Maybe I will keep in this state until the end of time");
+                                                          << recovery_period_.toSec()
+                                                          << " seconds, safety is not enabled but auto "
+                                                          << " recovery is not enabled. Maybe I will keep in this "
+                                                             "state until the end of time");
             }
             else
             {
               ROS_WARN_STREAM_NAMED("RobotnikBaseHW", "RobotnikBaseHW is in emergency for more than "
-                              << recovery_period_.toSec() << " seconds, safety is not enabled and auto recovery "
+                                                          << recovery_period_.toSec()
+                                                          << " seconds, safety is not enabled and auto recovery "
                                                              "is enabled. I'm trying to restart the system");
               must_reset_hw_ = true;
             }
@@ -173,25 +182,39 @@ public:
       switch (state)
       {
         case HW_STATE_INIT:
-          if (robotnik_base_hw_lib_->IsSystemReady())
+          ROS_WARN_STREAM_ONCE_NAMED("RobotnikBaseHW", "RobotnikBaseHW: HW_STATE_INIT");
+          if (robotnik_base_hw_lib_->IsSystemReady() == true)
           {
             state = HW_STATE_HOMING;
             bool force_home = false;
             robotnik_base_hw_lib_->SendToHome(force_home);
           }
-          break;
-
-        case HW_STATE_HOMING:
-          if (robotnik_base_hw_lib_->IsHomed())
+          else
           {
-            state = HW_STATE_READY;
+            ROS_ERROR_STREAM_THROTTLE_NAMED(5, "RobotnikBaseHW", "RobotnikBaseHW: The hardware is NOT ready");
           }
           break;
 
+        case HW_STATE_HOMING:
+          ROS_WARN_STREAM_ONCE_NAMED("RobotnikBaseHW", "RobotnikBaseHW: HW_STATE_HOMING");
+          if (robotnik_base_hw_lib_->IsHomed())
+          {
+            ROS_WARN_STREAM_THROTTLE_NAMED(60, "RobotnikBaseHW", "RobotnikBaseHW: The hardware now is ready");
+            state = HW_STATE_READY;
+          }
+          else
+          {
+            ROS_WARN_STREAM_THROTTLE_NAMED(5, "RobotnikBaseHW", "RobotnikBaseHW: Waiting motors to be homed");
+          }
+
+          break;
+
         case HW_STATE_READY:
+          ROS_WARN_STREAM_THROTTLE_NAMED(60, "RobotnikBaseHW", "RobotnikBaseHW: The hardware is ready");
           robotnik_base_hw_lib_->write(elapsed_time);
           break;
         case HW_STATE_RESTART:
+          ROS_WARN_STREAM_THROTTLE_NAMED(5, "RobotnikBaseHW", "RobotnikBaseHW: The hardware is going to be restarted");
           must_reset_hw_ = false;
           robotnik_base_hw_lib_->Stop();
           robotnik_base_hw_lib_->ShutDown();
