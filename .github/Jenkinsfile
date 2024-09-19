@@ -1,3 +1,5 @@
 buildPackage(
-  upstreamProjects: 'robotnik_base_hw_lib,robotnik_msgs'
+  upstreamProjects: 'robotnik_base_hw_lib,robotnik_msgs',
+  install_pcan: true,
+  pcan_version: '8.16.0',
 )
