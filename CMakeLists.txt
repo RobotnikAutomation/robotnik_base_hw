@@ -9,6 +9,7 @@ add_compile_options(-std=c++11)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   controller_manager
+  robotnik_base_hw_lib
   robotnik_msgs
   roscpp
 )
@@ -30,7 +31,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robotnik_base_hw
-#  CATKIN_DEPENDS controller_manager robotnik_msgs roscpp
+  CATKIN_DEPENDS controller_manager robotnik_base_hw_lib robotnik_msgs roscpp
 #  DEPENDS system_lib
 )
 
@@ -53,9 +54,9 @@ add_executable(${PROJECT_NAME}_node src/robotnik_base_hw_node.cpp)
 add_dependencies(${PROJECT_NAME}_node robotnik_msgs_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
- target_link_libraries(${PROJECT_NAME}_node
-   robotnik_base_hw
-   ${catkin_LIBRARIES}
+target_link_libraries(${PROJECT_NAME}_node
+  robotnik_base_hw
+  ${catkin_LIBRARIES}
 )
 
 #############
