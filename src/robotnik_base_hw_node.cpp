@@ -100,6 +100,10 @@ int main(int argc, char** argv)
 			break;
 			
 			case HW_STATE_READY:
+				// ENFORCE LIMITS INTERVENTION:
+				// Clamp controller commands to the configured ROS joint limits before sending
+				// them to the hardware. This is the ros_control safety layer.
+				robotnik_base_hw_lib->enforceLimits(elapsed_time);
 				robotnik_base_hw_lib->write(elapsed_time);
 			break;
 		}

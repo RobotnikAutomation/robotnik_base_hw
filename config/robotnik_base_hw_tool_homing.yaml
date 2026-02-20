@@ -21,3 +21,9 @@ robotnik_base_hw:
   # Tool homed state publication
   tool_homed_topic: tool_homed
   tool_homed_publish_hz: 1.0
+
+  # External motion inhibit (from topic)
+  # If active, homing is rejected/aborted and write() ignores motion commands.
+  motion_inhibit_topic: motion_inhibit
+  motion_inhibit_active_high: true
+  motion_inhibit_default: false
