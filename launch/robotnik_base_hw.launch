@@ -9,7 +9,8 @@
 
  
     <rosparam file="$(find robotnik_base_hw)/config/robotnik_base_hw_limits.yaml" command="load" />    
-    <rosparam file="$(find robotnik_base_hw)/config/robotnik_base_hw.yaml" command="load" />    
+    <rosparam file="$(find robotnik_base_hw)/config/robotnik_base_hw.yaml" command="load" />
+    <rosparam file="$(find robotnik_base_hw)/config/robotnik_base_hw_tool_homing.yaml" command="load" />
     <node name="robotnik_base_hw" pkg="robotnik_base_hw" type="robotnik_base_hw_node" output="screen" launch-prefix="$(arg launch_prefix)" />
 	
 </launch>

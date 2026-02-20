@@ -1,0 +1,23 @@
+robotnik_base_hw:
+  # Tool homing procedure configuration
+  # Digital input mapping (1-indexed across configured drives)
+  homing_input_translation: 1
+  homing_input_rotation: 2
+  homing_input_debounce_samples: 3
+
+  # Homing command profile
+  homing_translation_step: -0.0009
+  homing_rotation_step: -0.0004
+  homing_sleep_us: 1000
+
+  # Homing timeouts (seconds). 0.0 disables each timeout.
+  # These phase-specific values override the legacy global timeout behavior.
+  homing_translation_timeout_sec: 0.0
+  homing_rotation_timeout_sec: 0.0
+
+  # Legacy global timeout fallback kept for compatibility
+  homing_timeout_sec: 0.0
+
+  # Tool homed state publication
+  tool_homed_topic: tool_homed
+  tool_homed_publish_hz: 1.0
