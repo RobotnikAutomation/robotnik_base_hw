@@ -37,6 +37,13 @@ robotnik_base_hw:
   elevator_digital_input_high: 3
   elevator_digital_input_low: 2 
 
+  # Software emergency stop via Modbus.
+  # When the topic publishes true, tool motion is immediately inhibited and
+  # stays inhibited until the topic publishes false (latched behaviour).
+  # The parameter key is fixed by the precompiled robotnik_base_hw_lib binary.
+  motion_inhibit_topic: /modbus_emergency
+  motion_inhibit_active_high: true
+
 generic_hw_control_loop:
   loop_hz: 300 
   cycle_time_error_threshold: 0.01
