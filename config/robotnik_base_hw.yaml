@@ -37,6 +37,9 @@ robotnik_base_hw:
   elevator_digital_input_high: 3
   elevator_digital_input_low: 2 
 
+  tool_limit_x_tolerance: 0.01
+  tool_limit_beta_tolerance: 0.01
+
   # Software emergency stop via Modbus.
   # When the topic publishes true, tool motion is immediately inhibited and
   # stays inhibited until the topic publishes false (latched behaviour).
